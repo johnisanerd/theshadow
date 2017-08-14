@@ -18,7 +18,7 @@ Board 4: Address = 0x64 Offset = binary 0100 (bridge A2, middle jumper)
 
 # create a default object, no changes to I2C address or frequency
 mh1 = Adafruit_MotorHAT(addr=0x61)
-mh2 = Adafruit_MotorHAT(addr=0x60)
+#mh2 = Adafruit_MotorHAT(addr=0x60)
 
 # recommended for auto-disabling motors on shutdown!
 def turnOffMotors():
@@ -34,59 +34,63 @@ def turnOffMotors():
 
 atexit.register(turnOffMotors)
 
-myStepper1 = mh1.getStepper(200, 1)       # 200 steps/rev, motor port #1
-myStepper1.setSpeed(400)                 # 30 RPM
-
+# Initialize the Steppers
+myStepper1 = mh1.getStepper(200, 1)       # 200 steps/rev, motor port #1, Mercury Motor
 myStepper2 = mh1.getStepper(200, 2)       # 200 steps/rev, motor port #2
-myStepper2.setSpeed(400)                 # 30 RPM
+#myStepper3 = mh2.getStepper(200, 1)       # 200 steps/rev, motor port #3
+#myStepper4 = mh2.getStepper(200, 2)       # 200 steps/rev, motor port #4
 
-myStepper3 = mh2.getStepper(200, 1)       # 200 steps/rev, motor port #3
-myStepper3.setSpeed(400)                 # 30 RPM
+rpm = 40
+# Setup Initial Speed
+myStepper1.setSpeed(rpm)                 # 30 RPM
+myStepper2.setSpeed(rpm)                 # 30 RPM
+#myStepper3.setSpeed(rpm)                 # 30 RPM
+#myStepper4.setSpeed(rpm)                 # 30 RPM
 
-myStepper4 = mh2.getStepper(200, 2)       # 200 steps/rev, motor port #4
-myStepper4.setSpeed(400)                 # 30 RPM
-
+# Threading control of Steppers
 def stepper_worker(stepper, numsteps, direction, style):
     #print("Steppin!")
     stepper.step(numsteps, direction, style)
     #print("Done")
 
 while (True):
-    #myStepper.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.SINGLE)
-    #myStepper.step(100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.SINGLE)
-    #print("Double coil steps")
+    try:
+		# Blocking
+		# myStepper1.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
+		# myStepper2.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
+		# myStepper3.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
+		# myStepper4.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
 
-    # Blocking
-    myStepper1.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
-    myStepper2.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
+		move = Adafruit_MotorHAT.DOUBLE
+		# move = Adafruit_MotorHAT.INTERLEAVE
+		# move = Adafruit_MotorHAT.SINGLE
 
-    myStepper3.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
-    myStepper4.step(100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE)
+		# Non-Blocking
+		st1 = threading.Thread(target=stepper_worker, args=(myStepper1, 100, Adafruit_MotorHAT.FORWARD, move))
+		st2 = threading.Thread(target=stepper_worker, args=(myStepper2, 100, Adafruit_MotorHAT.FORWARD, move))
+		#st3 = threading.Thread(target=stepper_worker, args=(myStepper3, 100, Adafruit_MotorHAT.FORWARD, move))
+		#st4 = threading.Thread(target=stepper_worker, args=(myStepper4, 100, Adafruit_MotorHAT.FORWARD, move))
+		st1.start()
+		st2.start()
+		#st3.start()
+		#st4.start()
 
-    # Non-Blocking
-    st1 = threading.Thread(target=stepper_worker, args=(myStepper1, 100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE))
-    st2 = threading.Thread(target=stepper_worker, args=(myStepper2, 100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE))
-    st3 = threading.Thread(target=stepper_worker, args=(myStepper3, 100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE))
-    st4 = threading.Thread(target=stepper_worker, args=(myStepper4, 100, Adafruit_MotorHAT.FORWARD, Adafruit_MotorHAT.DOUBLE))
-    st1.start()
-    st2.start()
-    st3.start()
-    st4.start()
+		time.sleep(5)
 
-    time.sleep(5)
+		# Non-Blocking
+		st1 = threading.Thread(target=stepper_worker, args=(myStepper1, 100, Adafruit_MotorHAT.BACKWARD, move))
+		st2 = threading.Thread(target=stepper_worker, args=(myStepper2, 100, Adafruit_MotorHAT.BACKWARD, move))
+		#st3 = threading.Thread(target=stepper_worker, args=(myStepper3, 100, Adafruit_MotorHAT.BACKWARD, move))
+		#st4 = threading.Thread(target=stepper_worker, args=(myStepper4, 100, Adafruit_MotorHAT.BACKWARD, move))
+		st1.start()
+		st2.start()
+		#st3.start()
+		#st4.start()
 
-    # Non-Blocking
-    st1 = threading.Thread(target=stepper_worker, args=(myStepper1, 100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.DOUBLE))
-    st2 = threading.Thread(target=stepper_worker, args=(myStepper2, 100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.DOUBLE))
-    st3 = threading.Thread(target=stepper_worker, args=(myStepper3, 100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.DOUBLE))
-    st4 = threading.Thread(target=stepper_worker, args=(myStepper4, 100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.DOUBLE))
-    st1.start()
-    st2.start()
-    st3.start()
-    st4.start()
+		time.sleep(5)
 
-    time.sleep(5)
-
+    except:
+        print("There was an exception.")
 
     #myStepper.step(100, Adafruit_MotorHAT.BACKWARD, Adafruit_MotorHAT.DOUBLE)
     #print("Interleaved coil steps")
