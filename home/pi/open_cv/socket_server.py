@@ -1,9 +1,13 @@
 #Adapted from https://pymotw.com/2/socket/tcp.html
+# This example serves up a string of x,y coordinates.
+# The coordinates are randomly generated.
 
 import socket
 import sys
 import random
 import time
+
+port_number = 10003
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,7 +18,7 @@ sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Allow us to reuse 
 
 
 # Bind the socket to the port
-server_address = ('localhost', 10000)
+server_address = ('localhost', port_number)
 print >>sys.stderr, 'starting up on %s port %s' % server_address
 
 while True:
