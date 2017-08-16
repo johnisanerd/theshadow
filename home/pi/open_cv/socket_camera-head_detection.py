@@ -29,12 +29,15 @@ import sys
 import threading
 import atexit
 
-port_number = 10010
-
+##########################################
+# CONTROL VARIABLES
+##########################################
+port_number = 10001
+socket_timeout = 2                   # 2 Second timeout on socket listening.
 debug_video_on = True                # Turn this off and on to show the debug outputs.
 debug_socks_on = True                # Turn this off and on to show the debug outputs.
-
 show_output = False         # Turn this off and on to show the picture output.
+##########################################
 
 # Debug function for video
 def debug_video(string_in):
@@ -200,6 +203,7 @@ def face_analyze(img):
 # Sockets Setup
 ##########################################
 # Create a TCP/IP socket
+socket.setdefaulttimeout(socket_timeout)    # Set the socket timeout for listening.
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Allow us to reuse addresses.
@@ -229,12 +233,12 @@ def socket_server():
     ##########################################
     # Sockets
     ##########################################
+
     # Wait for a connection
     debug_sockets("Waiting for a connection.")
-    connection, client_address = sock.accept()
-    # atexit.register(connection.close())
-
     try:
+        connection, client_address = sock.accept()
+
         debug_sockets("Connection from " + str(client_address))
 
         data1 = str(random.randint(111,999))
@@ -248,9 +252,18 @@ def socket_server():
     except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
         # Clean up the connection
         connection.close()
+    except socket.error, exc:
+        debug_sockets("Uncaught Socket Error: " + str(exc))
+    except Exception,e:
+        debug_sockets("Listening exception: " + str(e))
+        # No need to close a connection here?
     finally:
         # Clean up the connection
-        connection.close()
+        try:
+            connection.close()
+        except Exception,e:
+            debug_sockets("Ucaught exception: " + str(e))
+
     ##########################################
     # End Sockets
     ##########################################
@@ -262,10 +275,12 @@ def socket_server():
 
 def atexit_shutdown_camera():
     # Release everything if job is finished
+    debug_video("CAMERA SHUTDOWN CALLED.")
     cap.release()
     # out.release()
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    debug_video("CAMERA SHUTDOWN FINISHED.")
 
 atexit.register(atexit_shutdown_camera)
 ##########################################
@@ -273,7 +288,7 @@ atexit.register(atexit_shutdown_camera)
 ##########################################
 
 while(True):
-    '''
+
     try:
         ##########################################
         ## WEBCAM OPTIONS
@@ -281,34 +296,37 @@ while(True):
         # Capture frame-by-frame
         ret, frame = cap.read()  # returns a bool (True/False). If frame is read correctly, it will be True. So you can check end of the video by checking this return value.
         ##########################################
-    '''
-    '''
-    ##########################################
-    # Pi CAMERA OPTIONS
-    ##########################################
-    rawCapture = PiRGBArray(camera)
-    camera.capture(rawCapture, format="bgr")
-    frame = rawCapture.array
-    ##########################################
-    '''
-    '''
+
+        '''
+        ##########################################
+        # Pi CAMERA OPTIONS
+        ##########################################
+        rawCapture = PiRGBArray(camera)
+        camera.capture(rawCapture, format="bgr")
+        frame = rawCapture.array
+        ##########################################
+        '''
+
         face = face_analyze(frame)
         if show_output:
             cv2.imshow('img',face)
 
         if cv2.waitKey(15) & 0xFF == ord('q'):
             break
-    except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
-        atexit_shutdown_camera()
+    # except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
+    #    atexit_shutdown_camera()
     except Exception,e:
-        atexit_shutdown_camera()
-    '''
+        debug_video("Exit the loop with error " + str(e))
+    #    atexit_shutdown_camera()
+
     # Start the server threading.
-    server_thread = threading.Thread(target=socket_server)
-    if not server_thread.isAlive():
-        server_thread.start()
-        debug_sockets("Server thread dead, starting.")
-    else:
-        if debug:
+    try:
+        server_thread = threading.Thread(target=socket_server)
+        if not server_thread.isAlive():
+            server_thread.start()
+            debug_sockets("Server thread dead, starting.")
+        else:
             debug_sockets("Server thread alive, not starting.")
-    server_thread.join()
+        server_thread.join()
+    except Exception,e:
+        debug_sockets("Start the server threading. Exception: " + str(e))

@@ -203,8 +203,7 @@ while(True):
 
     face = face_analyze(frame)
     cv2.imshow('img',face)
-    # cv2.imshow('img',frame)
-    # out.write(face)
+
     if cv2.waitKey(15) & 0xFF == ord('q'):
         break
 
