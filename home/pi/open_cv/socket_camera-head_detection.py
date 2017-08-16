@@ -32,7 +32,7 @@ import atexit
 ##########################################
 # CONTROL VARIABLES
 ##########################################
-port_number = 10001
+port_number = 10002
 socket_timeout = 2                   # 2 Second timeout on socket listening.
 debug_video_on = True                # Turn this off and on to show the debug outputs.
 debug_socks_on = True                # Turn this off and on to show the debug outputs.
@@ -241,14 +241,15 @@ def socket_server():
 
         debug_sockets("Connection from " + str(client_address))
 
-        data1 = str(random.randint(111,999))
-        data2 = str(random.randint(111,999))
-        data_joined = data1 + "," + data2
+        # Format the data so that it's always 3 digits wide.
+        x_data = str('%03.0f' % average_x)
+        y_data = str('%03.0f' % average_y)
+
+        data_joined = str(x_data) + "," + str(y_data)
         debug_sockets( data_joined)
-        #data_joined = 'Hello'
-        # connection.sendall('HELLO')
+
         connection.sendall(data_joined)
-        # Receive the data in small chunks and retransmit it
+
     except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
         # Clean up the connection
         connection.close()
