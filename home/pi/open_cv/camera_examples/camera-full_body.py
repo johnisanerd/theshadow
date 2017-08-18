@@ -14,7 +14,7 @@ debug = False
 ## VIDEO EXAMPLES OPTIONS
 ##########################################
 #cap = cv2.VideoCapture('Gallery-1.mp4')
-cap = cv2.VideoCapture('Gallery-2.mp4')#
+#cap = cv2.VideoCapture('Gallery-2.mp4')#
 #cap = cv2.VideoCapture('Gallery-3.mp4')
 #cap = cv2.VideoCapture(0)
 ##########################################
@@ -31,6 +31,13 @@ camera = PiCamera()
 rawCapture = PiRGBArray(camera)
 ##########################################
 '''
+
+##########################################
+## WEBCAM OPTIONS
+##########################################
+cap = cv2.VideoCapture(0)
+##########################################
+
 
 # allow the camera to warmup
 time.sleep(0.1)
@@ -54,7 +61,7 @@ def MeanData(new_x_value, new_y_value):
     global x_list
     global y_list
     global average_x, average_y
-    
+
     array_position = array_position + 1     # Increase the Array Position!
     array_pos = array_position % list_max_size   # Calculate the modulo
 
@@ -64,7 +71,7 @@ def MeanData(new_x_value, new_y_value):
     else:
         # If it's larger, divide and place in the modulo.
         x_list[array_pos] = new_x_value
-    
+
     if len(y_list) < list_max_size:
         y_list.append(new_y_value)  # Tack on the new value to the list.
     else:
@@ -74,7 +81,7 @@ def MeanData(new_x_value, new_y_value):
     # Calculate the running average.
     average_x = sum(x_list)/len(x_list)
     average_y = sum(y_list)/len(y_list)
-    
+
     if debug:
         print("Modulo: " + str(array_pos))
         print("X_List: " + str(x_list))
@@ -111,11 +118,11 @@ def find_center_mass(img, rects):
     #Average the totals out
     x_avg = x_total/len(rects)
     y_avg = y_total/len(rects)
-    
+
     if debug:
         print "x Avg: " + str(x_avg)
         print "y Avg: " + str(y_avg)
-    
+
     MeanData(x_avg, y_avg)
 
     return x_avg, y_avg
@@ -132,7 +139,7 @@ def non_max_suppression_fast(boxes, overlapThresh):
     if boxes.dtype.kind == "i":
         boxes = boxes.astype("float")
 
-    # initialize the list of picked indexes	
+    # initialize the list of picked indexes
     pick = []
 
     # grab the coordinates of the bounding boxes
@@ -177,7 +184,7 @@ def non_max_suppression_fast(boxes, overlapThresh):
     # return only the bounding boxes that were picked using the
     # integer data type
     return boxes[pick].astype("int")
-    
+
 
 if __name__ == '__main__':
 
@@ -190,7 +197,7 @@ if __name__ == '__main__':
         ##########################################
         _,frame=cap.read()
         ##########################################
-        
+
         '''
         ##########################################
         # Pi CAMERA OPTIONS
@@ -201,7 +208,7 @@ if __name__ == '__main__':
         ##########################################
         '''
 
-        
+
         # found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
         found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(8,8), scale=1.05)
         # print found
@@ -212,10 +219,10 @@ if __name__ == '__main__':
             print "Center mass: " + str(find_center_mass(frame,found))
         except:
             print "Probably found a zero error."
-            
+
         # Draw a red circle representing the running average position.
         cv2.circle(frame, (average_x, average_y), 5, (0,0,255), -1)
-        
+
         cv2.imshow('feed',frame)
         ch = 0xFF & cv2.waitKey(10)
         if ch == 27:
