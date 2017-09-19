@@ -1,7 +1,9 @@
 /*  Motor Control Truth Tables:  https://www.bananarobotics.com/shop/How-to-use-the-L298N-Dual-H-Bridge-Motor-Driver
  *  A Max:
- *  VMax:
+ *  Send a test "-123,0321" 
 */
+
+// Motor Controller 1 Pins
 #define enA 9
 #define enB 8
 #define in1 6
@@ -16,7 +18,8 @@ void set_motors(int m1, int m2){
   ///////////////////
   // Motor 1
   //////////////////
-  int pwmOutput1 = map(abs(m1), 0, 100, 0 , 255);  // Map the potentiometer value from 0 to 255
+  // int pwmOutput1 = map(abs(m1), 0, 100, 0 , 255);  // Map the potentiometer value from 0 to 255
+  int pwmOutput1(abs(m1));
   analogWrite(enA, pwmOutput1);                    // Send PWM signal to L298N Enable pin
   
   if(m1 < 0){
@@ -37,7 +40,8 @@ void set_motors(int m1, int m2){
   ///////////////////
   // Motor 2
   //////////////////
-  int pwmOutput2 = map(abs(m2), 0, 100, 0 , 255);  // Map the potentiometer value from 0 to 255
+  // int pwmOutput2 = map(abs(m2), 0, 100, 0 , 255);  // Map the potentiometer value from 0 to 255
+  int pwmOutput2(abs(m2));
   analogWrite(enB, pwmOutput2);                    // Send PWM signal to L298N Enable pin
   
   if(m1 < 0){
@@ -58,7 +62,7 @@ void set_motors(int m1, int m2){
 
 void setup() {
   // Open serial communications and wait for port to open:
-  Serial.begin(115200);
+  Serial.begin(1000000);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -75,19 +79,49 @@ void setup() {
   set_motors(0,0);
 }
 
-int get_power(){
-  // 125 is full power, 254 is full negative power.
-  
-  char buffer[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' '};
-  while (!Serial.available()); // Wait for characters
-  Serial.readBytesUntil('n', buffer, 7);
-  int incomingValue = atoi(buffer);
-  Serial.println(incomingValue);
-  return incomingValue;
+int power1 = 0; // Global motor power 1
+int power2 = 0; // Global motor power 2
+
+int serial_get_power(){
+  // Send a test "-123,0321" 
+  char buffer1[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' '};
+  char buffer2[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' '};
+  // while (!Serial.available()); // Wait for characters
+  if(Serial.available()){ 
+    Serial.readBytesUntil(',', buffer1, 5);
+    Serial.readBytesUntil('n', buffer2, 5);
+    int incomingValue1 = atoi(buffer1);
+    int incomingValue2 = atoi(buffer2);
+    Serial.print(incomingValue1);
+    Serial.print(",");
+    Serial.println(incomingValue2);
+
+    power1 = incomingValue1;
+    power2 = incomingValue2;
+    
+    return 0;
+  }
+  else{
+    return -1;
+  }
 }
 
 void loop() {
-  int power = get_power();
-  set_motors(power,power);
-  set_motors(power,power);  
+  /*
+  serial_get_power();
+  set_motors(power1,power2);
+  */
+  int run_time = 5000;
+  set_motors(255,255);
+  delay(run_time);
+  set_motors(0,0);
+  delay(1000);
+  
+  set_motors(-255,-255);
+  delay(run_time);
+  set_motors(0,0);
+  delay(1000);
+  
 }
+
+
