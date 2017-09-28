@@ -13,10 +13,40 @@ int m4_back_limit = 27;
 int m4_forw_mag   = 25;
 int m4_back_mag   = 29;
 
-int status_m4_forw_limit = false;
-int status_m4_back_limit = false;
-int status_m4_forw_mag   = false;
-int status_m4_back_mag   = false;
+int m3_forw_limit = 31;
+int m3_back_limit = 35;
+int m3_forw_mag   = 33;
+int m3_back_mag   = 37;
+
+int m2_forw_limit = 39;
+int m2_back_limit = 43;
+int m2_forw_mag   = 41;
+int m2_back_mag   = 53;
+
+int m1_forw_limit = 45;
+int m1_back_limit = 49;
+int m1_forw_mag   = 47;
+int m1_back_mag   = 51;
+
+int status_m4_forw_limit = 0;
+int status_m4_back_limit = 0;
+int status_m4_forw_mag   = 0;
+int status_m4_back_mag   = 0;
+
+int status_m3_forw_limit = 0;
+int status_m3_back_limit = 0;
+int status_m3_forw_mag   = 0;
+int status_m3_back_mag   = 0;
+
+int status_m2_forw_limit = 0;
+int status_m2_back_limit = 0;
+int status_m2_forw_mag   = 0;
+int status_m2_back_mag   = 0;
+
+int status_m1_forw_limit = 0;
+int status_m1_back_limit = 0;
+int status_m1_forw_mag   = 0;
+int status_m1_back_mag   = 0;
 
 
 bool debug = true;
@@ -47,6 +77,21 @@ void setup()
   pinMode(m4_forw_mag, INPUT);
   pinMode(m4_back_mag, INPUT);
 
+  pinMode(m3_forw_limit, INPUT);
+  pinMode(m3_back_limit, INPUT);
+  pinMode(m3_forw_mag, INPUT);
+  pinMode(m3_back_mag, INPUT);
+
+  pinMode(m2_forw_limit, INPUT);
+  pinMode(m2_back_limit, INPUT);
+  pinMode(m2_forw_mag, INPUT);
+  pinMode(m2_back_mag, INPUT);
+
+  pinMode(m1_forw_limit, INPUT);
+  pinMode(m1_back_limit, INPUT);
+  pinMode(m1_forw_mag, INPUT);
+  pinMode(m1_back_mag, INPUT);
+
   // Open serial communications and wait for port to open:
   Serial.begin(2000000);
   while (!Serial) {
@@ -62,12 +107,44 @@ void check_switches(){
   status_m4_forw_mag   = digitalRead(m4_forw_mag);
   status_m4_back_mag   = digitalRead(m4_back_mag);
 
+  status_m3_forw_limit = digitalRead(m3_forw_limit);
+  status_m3_back_limit = digitalRead(m3_back_limit);
+  status_m3_forw_mag   = digitalRead(m3_forw_mag);
+  status_m3_back_mag   = digitalRead(m3_back_mag);
+
+  status_m2_forw_limit = digitalRead(m2_forw_limit);
+  status_m2_back_limit = digitalRead(m2_back_limit);
+  status_m2_forw_mag   = digitalRead(m2_forw_mag);
+  status_m2_back_mag   = digitalRead(m2_back_mag);
+
+  status_m1_forw_limit = digitalRead(m1_forw_limit);
+  status_m1_back_limit = digitalRead(m1_back_limit);
+  status_m1_forw_mag   = digitalRead(m1_forw_mag);
+  status_m1_back_mag   = digitalRead(m1_back_mag);
+
+
   if(debug){
     Serial.println(" - - - ");
-    /* Serial.print("status_m4_forw_limit: "); */  Serial.println(status_m4_forw_limit, DEC);
-    /* Serial.print("status_m4_back_limit: "); */ Serial.println(status_m4_back_limit, DEC);
-    /* Serial.print("status_m4_forw_mag: "); */ Serial.println(status_m4_forw_mag, DEC);
-    /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m4_back_mag, DEC);   
+    /* Serial.print("status_m4_forw_limit: "); */  Serial.print(status_m1_forw_limit, DEC);
+    /* Serial.print("status_m4_back_limit: "); */ Serial.print(status_m1_back_limit, DEC);
+    /* Serial.print("status_m4_forw_mag: "); */ Serial.print(status_m1_forw_mag, DEC);
+    /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m1_back_mag, DEC); 
+
+    /* Serial.print("status_m4_forw_limit: "); */  Serial.print(status_m2_forw_limit, DEC);
+    /* Serial.print("status_m4_back_limit: "); */ Serial.print(status_m2_back_limit, DEC);
+    /* Serial.print("status_m4_forw_mag: "); */ Serial.print(status_m2_forw_mag, DEC);
+    /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m2_back_mag, DEC);     
+
+    /* Serial.print("status_m4_forw_limit: "); */  Serial.print(status_m3_forw_limit, DEC);
+    /* Serial.print("status_m4_back_limit: "); */ Serial.print(status_m3_back_limit, DEC);
+    /* Serial.print("status_m4_forw_mag: "); */ Serial.print(status_m3_forw_mag, DEC);
+    /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m3_back_mag, DEC);     
+    
+    /* Serial.print("status_m4_forw_limit: "); */  Serial.print(status_m4_forw_limit, DEC);
+    /* Serial.print("status_m4_back_limit: "); */ Serial.print(status_m4_back_limit, DEC);
+    /* Serial.print("status_m4_forw_mag: "); */ Serial.print(status_m4_forw_mag, DEC);
+    /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m4_back_mag, DEC); 
+    delay(1000);  
   }
 }
 
