@@ -4,7 +4,7 @@ import time
 import serial
 import atexit
 
-arduinoSerialData = serial.Serial('/dev/ttyACM1',2000000)
+arduinoSerialData = serial.Serial('/dev/ttyACM0',2000000)
 
 def atexit_shutdown_serial():
     arduinoSerialData.close()

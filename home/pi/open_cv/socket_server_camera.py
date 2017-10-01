@@ -7,16 +7,6 @@ Note: Webcam works best!
 THIS EXAMPLE ONLY READS THE FRONT and the side of the head.
 Webcam works best!
 
-
-"Brute Force" method.
-
-	K-Nearest Neighbor. - Idea is to search for closest match of the test data in feature space.
-
-	Face Detection using Haar Cascads -
-	Haar-cascade Detection in OpenCV. OpenCV comes with a trainer as well as detector. If you want to train your own classifier for any object like car, planes etc. you can use OpenCV to create one. Its full details are given here: Cascade Classifier Training. Here we will deal with detection.
-	http://docs.opencv.org/master/d7/d8b/tutorial_py_face_detection.html
-
-	https://www.youtube.com/watch?v=WfdYYNamHZ8
 	'''
 
 import numpy as np
@@ -32,12 +22,15 @@ import atexit
 ##########################################
 # CONTROL VARIABLES
 ##########################################
-port_number = 10002
+port_number = 10011
 socket_timeout = 2                   # 2 Second timeout on socket listening.
 debug_video_on = True                # Turn this off and on to show the debug outputs.
 debug_socks_on = True                # Turn this off and on to show the debug outputs.
-show_output = False         # Turn this off and on to show the picture output.
+debug_math_on = True
+show_output = True         # Turn this off and on to show the picture output.
 ##########################################
+
+global store_found_filtered     # This should be the global number that stores the number of bodies found.
 
 # Debug function for video
 def debug_video(string_in):
@@ -55,15 +48,16 @@ def debug_sockets(string_in):
 ##########################################
 #cap = cv2.VideoCapture('Gallery-1.mp4')
 #cap = cv2.VideoCapture('Gallery-2.mp4')#
+'''
 cap = cv2.VideoCapture('Gallery-3.mp4')
-#cap = cv2.VideoCapture(0)
+'''#cap = cv2.VideoCapture(0)
 ##########################################
 '''
 
 ##########################################
 ## WEBCAM OPTIONS
 ##########################################
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 ##########################################
 
 '''
@@ -93,6 +87,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 average_x = 0   # Average position of x
 average_y = 0   # Average position of y
 array_position = 0
+people_count = 0    # number of people in the last frame.
 
 x_list = [0,0]   # Starting array with 0's
 y_list = [0,0]   # Starting array with 0's
@@ -139,65 +134,97 @@ def MeanData(new_x_value, new_y_value):
 ##########################################
 
 
-# This function calculates the middle of the crowd
-def find_center_mass(img, faces, heads):
-    # Totals so we can average the math out.
-    # Max Window Height is 0 - 400
-    # Max Window Widgth is
-    image_height, image_width = img.shape[:2]
-    debug_video("Image Dimensions: " + str(image_height) + ", " + str(image_width))
+def inside(r, q):
+    rx, ry, rw, rh = r
+    qx, qy, qw, qh = q
+    return rx > qx and ry > qy and rx + rw < qx + qw and ry + rh < qy + qh
 
+
+def draw_detections(img, rects, thickness = 1):
+    for x, y, w, h in rects:
+        # the HOG detector returns slightly larger rectangles than the real objects.
+        # so we slightly shrink the rectangles to get a nicer output.
+        pad_w, pad_h = int(0.15*w), int(0.05*h)
+        cv2.rectangle(img, (x+pad_w, y+pad_h), (x+w-pad_w, y+h-pad_h), (0, 255, 0), thickness)
+
+# This function calculates the middle of the crowd
+def find_center_mass(img, rects):
+    # Totals so we can average the math out.
     x_total = 0
     y_total = 0
-    for x, y, w, h in faces:
-        x_total = x + (x_total + (w/2))
-        y_total = y + (y_total + (h/2))
-    for x, y, w, h in heads:
+    for x, y, w, h in rects:
         x_total = x + (x_total + (w/2))
         y_total = y + (y_total + (h/2))
     #Average the totals out
-    x_avg = x_total/(len(faces)+len(heads))
-    y_avg = y_total/(len(faces)+len(heads))
+    x_avg = x_total/len(rects)
+    y_avg = y_total/len(rects)
 
-    debug_video("x Avg: " + str(x_avg))
-    debug_video("y Avg: " + str(y_avg))
+    if debug_math_on:
+        print "x Avg: " + str(x_avg)
+        print "y Avg: " + str(y_avg)
 
     MeanData(x_avg, y_avg)
 
     return x_avg, y_avg
 
-# This function finds the faces and the side faces.
-def face_analyze(img):
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# Malisiewicz et al.
+def non_max_suppression_fast(boxes, overlapThresh):
+    # if there are no boxes, return an empty list
+    if len(boxes) == 0:
+        return []
 
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    heads = head_cascade.detectMultiScale(gray, 1.3, 5)
+    # if the bounding boxes integers, convert them to floats --
+    # this is important since we'll be doing a bunch of divisions
+    if boxes.dtype.kind == "i":
+        boxes = boxes.astype("float")
 
+    # initialize the list of picked indexes
+    pick = []
 
-    for (x,y,w,h) in faces:
-        # cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-        cv2.rectangle(gray,(x,y),(x+w,y+h),(255,0,0),2)
+    # grab the coordinates of the bounding boxes
+    x1 = boxes[:,0]
+    y1 = boxes[:,1]
+    x2 = boxes[:,2]
+    y2 = boxes[:,3]
 
-        '''
-        # The code below generated a random number on the face
-        # random_number = str(randint(0,99999999))
-        # cv2.putText(gray,random_number,(x,y+h), font, 1,(255,255,255),2)
-        '''
+    # compute the area of the bounding boxes and sort the bounding
+    # boxes by the bottom-right y-coordinate of the bounding box
+    area = (x2 - x1 + 1) * (y2 - y1 + 1)
+    idxs = np.argsort(y2)
 
-    for (x,y,w,h) in heads:
-        # cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-        cv2.rectangle(gray,(x,y),(x+w,y+h),(255,0,0),2)
-    try:
-        center_mass_of_face = find_center_mass(gray, faces, heads)
-        debug_video(center_mass_of_face)
-    except Exception,e:
-        debug_video("No Face Found! " + str(e))
+    # keep looping while some indexes still remain in the indexes
+    # list
+    while len(idxs) > 0:
+        # grab the last index in the indexes list and add the
+        # index value to the list of picked indexes
+        last = len(idxs) - 1
+        i = idxs[last]
+        pick.append(i)
 
-    # Draw a red circle representing the running average position.
-    cv2.circle(gray, (average_x, average_y), 5, (0,0,255), -1)
+        # find the largest (x, y) coordinates for the start of
+        # the bounding box and the smallest (x, y) coordinates
+        # for the end of the bounding box
+        xx1 = np.maximum(x1[i], x1[idxs[:last]])
+        yy1 = np.maximum(y1[i], y1[idxs[:last]])
+        xx2 = np.minimum(x2[i], x2[idxs[:last]])
+        yy2 = np.minimum(y2[i], y2[idxs[:last]])
 
-    return gray
+        # compute the width and height of the bounding box
+        w = np.maximum(0, xx2 - xx1 + 1)
+        h = np.maximum(0, yy2 - yy1 + 1)
+
+        # compute the ratio of overlap
+        overlap = (w * h) / area[idxs[:last]]
+
+        # delete all indexes from the index list that have
+        idxs = np.delete(idxs, np.concatenate(([last],
+            np.where(overlap > overlapThresh)[0])))
+
+    # return only the bounding boxes that were picked using the
+    # integer data type
+
+    return boxes[pick].astype("int")
 
 ##########################################
 # Sockets Setup
@@ -245,7 +272,7 @@ def socket_server():
         x_data = str('%03.0f' % average_x)
         y_data = str('%03.0f' % average_y)
 
-        data_joined = str(x_data) + "," + str(y_data)
+        data_joined = str(x_data) + "," + str(y_data) + "," + str(people_count)
         debug_sockets( data_joined)
 
         connection.sendall(data_joined)
@@ -288,6 +315,10 @@ atexit.register(atexit_shutdown_camera)
 # End At Exit Commands
 ##########################################
 
+hog = cv2.HOGDescriptor()
+hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
+
+
 while(True):
 
     try:
@@ -308,12 +339,29 @@ while(True):
         ##########################################
         '''
 
-        face = face_analyze(frame)
-        if show_output:
-            cv2.imshow('img',face)
 
-        if cv2.waitKey(15) & 0xFF == ord('q'):
+        found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(8,8), scale=1.05)
+        found_filtered = non_max_suppression_fast(found, 0.3)
+        people_count = len(found_filtered)
+        if debug_math_on:
+            print(found_filtered)
+            print("People Count: " + str(people_count))
+        if(show_output):
+            draw_detections(frame,found_filtered)
+        try:
+            print "Center mass: " + str(find_center_mass(frame,found_filtered))
+        except:
+            print "Probably found a zero error."
+
+        # Draw a red circle representing the running average position.
+        if(show_output):
+            cv2.circle(frame, (average_x, average_y), 5, (0,0,255), -1)
+            cv2.imshow('feed',frame)
+        ch = 0xFF & cv2.waitKey(10)
+        if ch == 27:
             break
+        print "=================================================="
+
     # except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
     #    atexit_shutdown_camera()
     except Exception,e:

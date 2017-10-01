@@ -2,7 +2,7 @@ import socket
 import sys
 import time
 
-port_number = 10002
+port_number = 10011
 
 while True:
     time.sleep(1)
