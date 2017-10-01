@@ -1,32 +1,36 @@
 
-int m1_a = 52;  // M1 Forward   // Purple
-int m1_b = 50;  // M1 Backward  // Grey wire
-int m2_a = 48;  // M2 Forward   // Green 
-int m2_b = 46;  // M2 Backward  // Blue
-int m3_a = 44;  // M3 Forward   // Orange
-int m3_b = 42;  // M3 Backward  // Yellow
-int m4_a = 40;  // M4 Forward   // Brown
-int m4_b = 38;  // M4 Backward  // Red
+// TimerOne will be used as an ISR interrupt to continuously check our switches
+#include "TimerOne.h"   // Code     - https://code.google.com/archive/p/arduino-timerone/downloads
+                        // Examples - https://playground.arduino.cc/Code/Timer1 
 
-int m4_forw_limit = 23;
-int m4_back_limit = 27;
-int m4_forw_mag   = 25;
-int m4_back_mag   = 29;
+#define m1_a 52  // M1 Forward   // Purple
+#define m1_b 50  // M1 Backward  // Grey wire
+#define m2_a 48  // M2 Forward   // Green 
+#define m2_b 46  // M2 Backward  // Blue
+#define m3_a 44  // M3 Forward   // Orange
+#define m3_b 42  // M3 Backward  // Yellow
+#define m4_a 40  // M4 Forward   // Brown
+#define m4_b 38  // M4 Backward  // Red
 
-int m3_forw_limit = 31;
-int m3_back_limit = 35;
-int m3_forw_mag   = 33;
-int m3_back_mag   = 37;
+#define m4_forw_limit  23
+#define m4_back_limit  27
+#define m4_forw_mag    25
+#define m4_back_mag    29
 
-int m2_forw_limit = 39;
-int m2_back_limit = 43;
-int m2_forw_mag   = 41;
-int m2_back_mag   = 53;
+#define m3_forw_limit  31
+#define m3_back_limit  35
+#define m3_forw_mag    33
+#define m3_back_mag    37
 
-int m1_forw_limit = 45;
-int m1_back_limit = 49;
-int m1_forw_mag   = 47;
-int m1_back_mag   = 51;
+#define m2_forw_limit  39
+#define m2_back_limit  43
+#define m2_forw_mag    41
+#define m2_back_mag    53
+
+#define m1_forw_limit  45
+#define m1_back_limit  49
+#define m1_forw_mag    47
+#define m1_back_mag    51
 
 int status_m4_forw_limit = 0;
 int status_m4_back_limit = 0;
@@ -48,8 +52,20 @@ int status_m1_back_limit = 0;
 int status_m1_forw_mag   = 0;
 int status_m1_back_mag   = 0;
 
+// Timeout Definition
+// Any given function will run for no longer than the timeout time.  If it exceeds, we shut it down.
+// For safety.
+unsigned long timeout_time = 60000;   // Timeout if we run past 60 seconds.
 
-bool debug = true;
+// Choreography Start Variables
+// These are the variables where we'll hold the data for choreography.  
+int m1_delay = 1000;  // Wait 1 second for the M1 to start
+int m2_delay = 2000;  // Wait 2 seconds for M2 to start.  ETC
+int m3_delay = 3000;
+int m4_delay = 4000;
+
+
+bool debug = false;
 
 void setup()
 {
@@ -91,6 +107,11 @@ void setup()
   pinMode(m1_back_limit, INPUT);
   pinMode(m1_forw_mag, INPUT);
   pinMode(m1_back_mag, INPUT);
+
+
+  Timer1.initialize(1000);         // initialize timer1, call long microseconds=1000000
+  Timer1.attachInterrupt(check_switches);  // attaches callback() as a timer overflow interrupt
+
 
   // Open serial communications and wait for port to open:
   Serial.begin(2000000);
@@ -144,7 +165,7 @@ void check_switches(){
     /* Serial.print("status_m4_back_limit: "); */ Serial.print(status_m4_back_limit, DEC);
     /* Serial.print("status_m4_forw_mag: "); */ Serial.print(status_m4_forw_mag, DEC);
     /* Serial.print("status_m4_back_mag: "); */ Serial.println(status_m4_back_mag, DEC); 
-    delay(1000);  
+    // delay(1000);  
   }
 }
 
@@ -173,20 +194,186 @@ void all_motors_stop(){
   digitalWrite(m3_b, HIGH);
   digitalWrite(m4_a, HIGH);    
   digitalWrite(m4_b, HIGH);
-  delay(1000);
+  delay(1000);    // Delay 1 second.  Prevents motor burnout.
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+int state = 0;  // State Machine:
+                // 0 - Last call was forward.
+                // 1 - Last call was backward.
+
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+
+int sum_of_forward_switches(){
+  int sum = status_m4_forw_limit +
+            status_m3_forw_limit +
+            status_m2_forw_limit +
+            status_m1_forw_limit + 
+            status_m4_forw_mag +
+            status_m3_forw_mag +
+            status_m2_forw_mag +
+            status_m1_forw_mag;
+  return sum;
+}
+
+int sum_of_forward_limit_switches(){
+  int sum = status_m4_forw_limit +
+            status_m3_forw_limit +
+            status_m2_forw_limit +
+            status_m1_forw_limit;
+  return sum;
+}
+
+void go_forward(){
+
+  // Start the timer
+  unsigned long time_start = millis();
+  
+  // Start running forward.  Get all the motors started!
+  // We run everything forward as long as not limit switches are pushed.  This prevents
+  // the magnets from overflowing from fwd to bwd and stopping everything.
+  while(sum_of_forward_limit_switches() == 0){
+      
+      unsigned long time_now = millis()-time_start;
+      Serial.println(time_now, DEC); 
+
+      if(time_now > m1_delay){
+          // If the timer is greater than 1 second, start M1
+          motor_fwd(m1_a, m1_b);
+      }
+      if(time_now > m2_delay){
+          // If the timer is greater than 2 second, start M2
+          motor_fwd(m2_a, m2_b);
+      }
+      if(time_now > m3_delay){
+          // If the timer is greater than 3 second, start M3
+          motor_fwd(m3_a, m3_b);
+      }
+      if(time_now > m4_delay){
+          // If the timer is greater than 4 second, start M4
+          motor_fwd(m4_a, m4_b);
+      }
+      unsigned long time_since_start = millis()-time_start;
+      // Run in this state until we've passed all motor delays.
+      if(
+        (time_since_start > m4_delay+100) &&
+        (time_since_start > m3_delay) &&
+        (time_since_start > m2_delay) &&
+        (time_since_start > m1_delay)
+      ){
+        break;    
+      }
+  }
+
+  // After the first switch is thrown start to shut everyone down.
+  
+  while((sum_of_forward_switches() < 4)){
+    // Do nothing until switches are hit . . .
+    if(status_m1_forw_mag || status_m1_forw_limit){
+      motor_stop(m1_a, m1_b);
+    }
+    if(status_m2_forw_mag || status_m2_forw_limit){
+      motor_stop(m2_a, m2_b);
+    }
+    if(status_m3_forw_mag || status_m3_forw_limit){
+      motor_stop(m3_a, m3_b);
+    }
+    if(status_m4_forw_mag || status_m4_forw_limit){
+      motor_stop(m4_a, m4_b);
+    }
+    
+    unsigned long time_since_start = millis()-time_start;
+    if(time_since_start > timeout_time){
+      all_motors_stop();  // Shutdown all four motors.
+      break;    
+    }
+  }
+  all_motors_stop();  // Shutdown all four motors.
+}
+
+int sum_of_backward_switches(){
+  int sum = status_m4_back_limit +
+            status_m3_back_limit +
+            status_m2_back_limit +
+            status_m1_back_limit + 
+            status_m4_back_mag +
+            status_m3_back_mag +
+            status_m2_back_mag +
+            status_m1_back_mag;
+  return sum;
+}
+
+int sum_of_backward_limit_switches(){
+  int sum = status_m4_back_limit +
+            status_m3_back_limit +
+            status_m2_back_limit +
+            status_m1_back_limit;
+  return sum;
+}
+
+void go_backward(){
+
+  // Start the timer
+  unsigned long time_start = millis();
+  
+  // Start running forward.  As long as no backward switch has been pressed.
+  unsigned long time_now = millis()-time_start;
+  while((sum_of_backward_limit_switches() == 0) && (time_now < 1000)){
+      
+      time_now = millis()-time_start;
+      Serial.println(time_now, DEC); 
+      motor_bwd(m1_a, m1_b);
+      motor_bwd(m2_a, m2_b);
+      motor_bwd(m3_a, m3_b);
+      motor_bwd(m4_a, m4_b);
+  }
+
+  // After the first switch (magnetic or mechanical) is thrown start to shut everyone down.
+  Serial.println(0, DEC);
+  
+  while((sum_of_backward_switches() < 4)){
+    // Do nothing until switches are hit . . .
+    // Serial.println(time_now, DEC);
+    if(status_m1_back_mag || status_m1_back_limit){
+      motor_stop(m1_a, m1_b);
+    }
+    if(status_m2_back_mag || status_m2_back_limit){
+      motor_stop(m2_a, m2_b);
+    }
+    if(status_m3_back_mag || status_m3_back_limit){
+      motor_stop(m3_a, m3_b);
+    }
+    if(status_m4_back_mag || status_m4_back_limit){
+      motor_stop(m4_a, m4_b);
+    }
+    
+    unsigned long time_since_start = millis()-time_start;
+    if(time_since_start > timeout_time){
+      all_motors_stop();  // Shutdown all four motors.
+      break;    
+    }
+  }
+  all_motors_stop();  // Shutdown all four motors.
+}
+
 
 void loop()
 {
-  check_switches();
+  // NOTE: check_switches is called every 1,000 microseconds (us) with an intterupt.
 
-  if(status_m4_forw_limit){
-    motor_fwd(m4_a, m4_b);
-  }
-  else{
-    motor_stop(m4_a, m4_b);
-  }
-  // delay(5000);                  // waits for a second
-  // all_motors_stop();
+  // When we get a serial call to go forward, go forward.
+
+  // When we get a serial call to go backward, go backward.
+
+  //go_forward();
+  //Serial.println("Finished Cycle.  Pause.");
+  //delay(10000);
+  go_backward();
+  Serial.println("Finished Backward Cycle.  Pause.");
+  delay(10000);
 
 }
