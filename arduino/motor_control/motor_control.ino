@@ -64,6 +64,7 @@ int m2_delay = 2000;  // Wait 2 seconds for M2 to start.  ETC
 int m3_delay = 3000;
 int m4_delay = 4000;
 
+long last_command_in = 0;
 
 bool debug = false;
 
@@ -118,7 +119,7 @@ void setup()
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  Serial.println("Setup and initialized!");
+  if(debug){Serial.println("Setup and initialized!");};
   
 }
 
@@ -200,14 +201,6 @@ void all_motors_stop(){
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
-int state = 0;  // State Machine:
-                // 0 - Last call was forward.
-                // 1 - Last call was backward.
-
-////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////
-
 int sum_of_forward_switches(){
   int sum = status_m4_forw_limit +
             status_m3_forw_limit +
@@ -239,7 +232,7 @@ void go_forward(){
   while(sum_of_forward_limit_switches() == 0){
       
       unsigned long time_now = millis()-time_start;
-      Serial.println(time_now, DEC); 
+      if(debug){Serial.println(time_now, DEC);};
 
       if(time_now > m1_delay){
           // If the timer is greater than 1 second, start M1
@@ -325,7 +318,7 @@ void go_backward(){
   while((sum_of_backward_limit_switches() == 0) && (time_now < 1000)){
       
       time_now = millis()-time_start;
-      Serial.println(time_now, DEC); 
+      if(debug){Serial.println(time_now, DEC); };
       motor_bwd(m1_a, m1_b);
       motor_bwd(m2_a, m2_b);
       motor_bwd(m3_a, m3_b);
@@ -361,6 +354,36 @@ void go_backward(){
 }
 
 
+void get_status(){
+
+	Serial.print(status_m1_forw_limit, DEC);
+	Serial.print(status_m1_back_limit, DEC);
+	Serial.print(status_m1_forw_mag, DEC);
+	Serial.print(status_m1_back_mag, DEC); 
+
+	Serial.print(status_m2_forw_limit, DEC);
+	Serial.print(status_m2_back_limit, DEC);
+	Serial.print(status_m2_forw_mag, DEC);
+	Serial.print(status_m2_back_mag, DEC);     
+
+	Serial.print(status_m3_forw_limit, DEC);
+	Serial.print(status_m3_back_limit, DEC);
+	Serial.print(status_m3_forw_mag, DEC);
+	Serial.print(status_m3_back_mag, DEC);     
+
+	Serial.print(status_m4_forw_limit, DEC);
+	Serial.print(status_m4_back_limit, DEC);
+	Serial.print(status_m4_forw_mag, DEC);
+	Serial.print(status_m4_back_mag, DEC); 
+
+	Serial.println(" ");
+}
+
+// Stop			- 1 - Stop
+// Go Forward	- 2 - Initiate the going forward
+// Go Backward	- 3 - Initiate the going backward
+// Get Status	- 4 - Get status of all switches.
+
 void loop()
 {
   // NOTE: check_switches is called every 1,000 microseconds (us) with an intterupt.
@@ -368,12 +391,38 @@ void loop()
   // When we get a serial call to go forward, go forward.
 
   // When we get a serial call to go backward, go backward.
+  
+  if(last_command_in == 1){
+	  if(debug){Serial.println("Received Command: Stop.");};
+	  all_motors_stop();
+  }
+  else if(last_command_in == 2){
+	  if(debug){Serial.println("Received Command Forward.");};
+	  go_forward();
+	  last_command_in = 1;
+  }
+  else if(last_command_in == 3){
+	  if(debug){Serial.println("Received Command Backward.");};
+	  go_backward();
+	  last_command_in = 1;
+  }
+  else if(last_command_in == 4){
+	  if(debug){Serial.println("Received Command Status.");};
+	  get_status();
+	  last_command_in = 1;  
+  }
+  else{
+	  
+  }
 
-  //go_forward();
-  //Serial.println("Finished Cycle.  Pause.");
-  //delay(10000);
-  go_backward();
-  Serial.println("Finished Backward Cycle.  Pause.");
-  delay(10000);
+}
 
+void serialEvent() {
+  while (Serial.available()) {
+    long inInt = Serial.parseInt();
+    if((inInt == 1) || (inInt ==2) || (inInt ==3) || (inInt ==4)){
+      last_command_in = inInt;
+      Serial.println(inInt, DEC);
+    }
+  }
 }
