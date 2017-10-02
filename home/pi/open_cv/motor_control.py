@@ -3,6 +3,12 @@
 import time
 import serial
 import atexit
+import socket
+import sys
+
+port_number = 10011
+server_host_name = 'localhost'
+
 try:
     arduinoSerialData = serial.Serial('/dev/ttyACM0',2000000)
 except Exception as e:
@@ -86,7 +92,59 @@ def get_info():
     return info
 
 
-while 1:
+##########################################################################
+#########################################################################
+# Sockets: Here is our socket data.
+def get_socket_data():
+    # Create a TCP/IP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Connect the socket to the port where the server is listening
+    server_address = (server_host_name, port_number)
+    print >>sys.stderr, 'connecting to %s port %s' % server_address
+    sock.connect(server_address)
+
+    try:
+        # Look for the response
+        amount_received = 0
+        amount_expected = 1 #len(message)
+
+        while amount_received < amount_expected:
+            data = sock.recv(16)
+            amount_received += len(data)
+            print >> sys.stderr, 'received "%s"' % data
+            time.sleep(1)
+        socket_data
+
+    except:
+        sock.close()
+    finally:
+        print >>sys.stderr, 'closing socket'
+        sock.close()
+
+##########################################################################
+#########################################################################
+# Scenarios: These are True/False statements that take in the x, y average,
+# and the people count.  If the scenario fits, it simply returns true or
+# false.
+
+def scenario_1(x_avg, y_avg, count):
+    # Here's our test
+    if(x_avg < 250 && y_avg > 100):
+        return True
+    else:
+        return False
+
+while True:
+
+    # Always start the loop with a stop.
+    print("Stop.")
+    go_stop()
+    time.sleep(5)
+
+
+
+    '''
     print("Stop.")
     go_stop()
     time.sleep(5)
@@ -110,3 +168,4 @@ while 1:
 
     print("Stop.")
     go_stop()
+    '''
