@@ -29,14 +29,15 @@ def debug_sockets(string_in):
 ##########################################
 # Create a TCP/IP socket
 socket.setdefaulttimeout(socket_timeout)    # Set the socket timeout for listening.
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket()
 
 # Allow us to reuse addresses.
 # https://stackoverflow.com/questions/4465959/python-errno-98-address-already-in-use
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Allow us to reuse addresses.
 
 # Bind the socket to the port
-server_address = ('localhost', port_number)
+# server_address = ('localhost', port_number)
+server_address = ('', port_number)
 debug_sockets("Starting up on %s port %s" % server_address)
 
 while True:
@@ -95,14 +96,17 @@ def socket_server():
     ##########################################
 
 while True:
+    global people_count
     # Start the server threading.
     try:
         server_thread = threading.Thread(target=socket_server)
         if not server_thread.isAlive():
-            server_thread.start()
             debug_sockets("Server thread dead, starting.")
+            server_thread.start()
         else:
             debug_sockets("Server thread alive, not starting.")
         server_thread.join()
     except Exception,e:
         debug_sockets("Start the server threading. Exception: " + str(e))
+
+    people_count = people_count + 1

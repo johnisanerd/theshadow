@@ -5,8 +5,8 @@ import socket
 import sys
 import time
 
-port_number = 10011
-server_1_name = 'localhost'
+port_number = 10013
+server_1_name = 'camera1.local'
 server_2_name = 'localhost'
 
 socket_timeout = 2                   # 2 Second timeout on socket listening.
@@ -19,6 +19,10 @@ camera_1_average_x = 0.0
 camera_1_average_y = 0.0
 camera_1_people_count = 0.0
 
+camera_2_average_x = 0.0
+camera_2_average_y = 0.0
+camera_2_people_count = 0.0
+
 # Debug function for sockets
 def debug_sockets(string_in):
     if debug_socks_on:
@@ -30,7 +34,7 @@ def get_socket_data(server_number):
 
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    sock.settimeout(5)  # Timeout in seconds
     # Connect the socket to the port where the server is listening
     if(server_number == 1):
         server_address = (server_1_name, port_number)
@@ -38,9 +42,10 @@ def get_socket_data(server_number):
         server_address = (server_2_name, port_number)
 
     debug_sockets('connecting to %s port %s' % server_address)
-    sock.connect(server_address)
+    debug_sockets("Server Address: " + str(server_address))
 
     try:
+        sock.connect(server_address)
         # Look for the response
         amount_received = 0
         amount_expected = 1 #len(message)
@@ -50,16 +55,19 @@ def get_socket_data(server_number):
             amount_received += len(data)
             debug_sockets('received "%s"' % data)
             time.sleep(1)
-
-    except:
-        sock.close()
-    finally:
+        debug_sockets("Got Data!")
         if(server_number == 1):
             camera_1_last_socket_data_received = str(data)   # Pass the socket data over.
         else:
             camera_2_last_socket_data_received = str(data)   # Pass the socket data over.
 
         debug_sockets('closing socket')
+
+    except Exception,e:
+        debug_sockets("Client exception: " + str(e))
+        sock.close()
+
+    finally:
         sock.close()
 
 # The function in which we take the last socket data and
@@ -91,7 +99,7 @@ def parse_socket_data():
         print("Parsing Data Error Camera 2 Server.")
 
 while True:
-    time.sleep(1)
+    time.sleep(5)
     get_socket_data(1)
     get_socket_data(2)
     parse_socket_data()
