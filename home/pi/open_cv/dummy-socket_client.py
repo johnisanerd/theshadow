@@ -5,9 +5,9 @@ import socket
 import sys
 import time
 
-port_number = 10013
+port_number = 10011
 server_1_name = 'camera1.local'
-server_2_name = 'localhost'
+server_2_name = 'camera2.local'
 
 socket_timeout = 2                   # 2 Second timeout on socket listening.
 debug_socks_on = True                # Turn this off and on to show the debug outputs.

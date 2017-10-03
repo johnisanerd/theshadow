@@ -7,7 +7,23 @@ import socket
 import sys
 
 port_number = 10011
-server_host_name = 'localhost'
+server_1_name = 'camera1.local'
+server_2_name = 'camera2.local'
+
+socket_timeout = 2                   # 2 Second timeout on socket listening.
+debug_socks_on = True                # Turn this off and on to show the debug outputs.
+
+camera_1_last_socket_data_received = ""
+camera_2_last_socket_data_received = ""
+
+camera_1_average_x = 0.0
+camera_1_average_y = 0.0
+camera_1_people_count = 0.0
+
+camera_2_average_x = 0.0
+camera_2_average_y = 0.0
+camera_2_people_count = 0.0
+
 
 try:
     arduinoSerialData = serial.Serial('/dev/ttyACM0',2000000)
@@ -21,6 +37,11 @@ def atexit_shutdown_serial():
     arduinoSerialData.close()
 
 atexit.register(atexit_shutdown_serial)
+
+# Debug function for sockets
+def debug_sockets(string_in):
+    if debug_socks_on:
+        print("Debug Sockets:" + string_in)
 
 # Read data from the serial line.
 def readSerial():
@@ -95,16 +116,24 @@ def get_info():
 ##########################################################################
 #########################################################################
 # Sockets: Here is our socket data.
-def get_socket_data():
+def get_socket_data(server_number):
+    global camera_1_last_socket_data_received
+    global camera_2_last_socket_data_received
+
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    sock.settimeout(5)  # Timeout in seconds
     # Connect the socket to the port where the server is listening
-    server_address = (server_host_name, port_number)
-    print >>sys.stderr, 'connecting to %s port %s' % server_address
-    sock.connect(server_address)
+    if(server_number == 1):
+        server_address = (server_1_name, port_number)
+    else:
+        server_address = (server_2_name, port_number)
+
+    debug_sockets('connecting to %s port %s' % server_address)
+    debug_sockets("Server Address: " + str(server_address))
 
     try:
+        sock.connect(server_address)
         # Look for the response
         amount_received = 0
         amount_expected = 1 #len(message)
@@ -112,15 +141,52 @@ def get_socket_data():
         while amount_received < amount_expected:
             data = sock.recv(16)
             amount_received += len(data)
-            print >> sys.stderr, 'received "%s"' % data
+            debug_sockets('received "%s"' % data)
             time.sleep(1)
-        socket_data
+        debug_sockets("Got Data!")
+        if(server_number == 1):
+            camera_1_last_socket_data_received = str(data)   # Pass the socket data over.
+        else:
+            camera_2_last_socket_data_received = str(data)   # Pass the socket data over.
 
-    except:
+        debug_sockets('closing socket')
+
+    except Exception,e:
+        debug_sockets("Client exception: " + str(e))
         sock.close()
+
     finally:
-        print >>sys.stderr, 'closing socket'
         sock.close()
+
+
+# The function in which we take the last socket data and
+# turn it into actual data.
+def parse_socket_data():
+    global camera_1_last_socket_data_received
+    global camera_2_last_socket_data_received
+
+    global camera_1_average_x
+    global camera_1_average_y
+    global camera_1_people_count
+
+    global camera_2_average_x
+    global camera_2_average_y
+    global camera_2_people_count
+
+    try:
+        camera_1_average_x = float(camera_1_last_socket_data_received.split(',')[0])
+        camera_1_average_y = float(camera_1_last_socket_data_received.split(',')[1])
+        camera_1_people_count = float(camera_1_last_socket_data_received.split(',')[2])
+    except:
+        print("Parsing Data Error Camera 1 Server.")
+
+    try:
+        camera_2_average_x = float(camera_2_last_socket_data_received.split(',')[0])
+        camera_2_average_y = float(camera_2_last_socket_data_received.split(',')[1])
+        camera_2_people_count = float(camera_2_last_socket_data_received.split(',')[2])
+    except:
+        print("Parsing Data Error Camera 2 Server.")
+
 
 ##########################################################################
 #########################################################################
@@ -130,7 +196,7 @@ def get_socket_data():
 
 def scenario_1(x_avg, y_avg, count):
     # Here's our test
-    if(x_avg < 250 && y_avg > 100):
+    if(x_avg < 250 and y_avg > 100):
         return True
     else:
         return False
@@ -169,3 +235,14 @@ while True:
     print("Stop.")
     go_stop()
     '''
+
+    get_socket_data(1)
+    get_socket_data(2)
+    parse_socket_data()
+    debug_sockets("C1 AvgX: " + str(camera_1_average_x))
+    debug_sockets("C1 AvgX: " + str(camera_1_average_y))
+    debug_sockets("C1 Count: " + str(camera_1_people_count))
+    debug_sockets("C2 AvgX: " + str(camera_2_average_x))
+    debug_sockets("C2 AvgX: " + str(camera_2_average_y))
+    debug_sockets("C2 Count: " + str(camera_2_people_count))
+    debug_sockets("==============================")
