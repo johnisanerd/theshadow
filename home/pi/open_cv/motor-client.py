@@ -5,6 +5,10 @@ import serial
 import atexit
 import socket
 import sys
+import random
+import signal
+
+timeout_time_m = 15                  # Minutes to timeout the whole process.  Feeds to timeout_time_s
 
 port_number = 10011
 server_1_name = 'camera1.local'
@@ -24,6 +28,38 @@ camera_2_average_x = 0.0
 camera_2_average_y = 0.0
 camera_2_people_count = 0.0
 
+##########################################################################
+#########################################################################
+# Randomness
+
+random_min_sec = 5
+random_max_sec = 30
+
+##########################################################################
+#########################################################################
+
+
+##########################################################################
+#########################################################################
+# Timeout
+# NOTE: BE SURE THERE IS NO CONFLICT WITH RANDOMNESS!
+
+timeout_time_s = 60*timeout_time_m
+# timeout_time_s = 5
+
+def timeouthandler(signum, frame):
+   print "Timed out!"
+   raise Exception("Timeout Exception: Timed out!")
+
+signal.signal(signal.SIGALRM, timeouthandler)
+
+def timeout_start():
+    signal.alarm(timeout_time_s)
+
+def timeout_end():
+    signal.alarm(0)
+##########################################################################
+#########################################################################
 
 try:
     arduinoSerialData = serial.Serial('/dev/ttyACM0',2000000)
@@ -41,12 +77,17 @@ atexit.register(atexit_shutdown_serial)
 # Debug function for sockets
 def debug_sockets(string_in):
     if debug_socks_on:
-        print("Debug Sockets:" + string_in)
+        print("Debug Sockets: # " + string_in)
+
+# Debug function for motors
+def debug_motors(string_in):
+    if debug_socks_on:
+        print("Debug Motors: # " + string_in)
 
 # Read data from the serial line.
 def readSerial():
     while arduinoSerialData.inWaiting == 0:  # Or: while ser.inWaiting():
-        print "Waiting"
+        print "Waiting on serial line."
 
     output_string = ""
     try:
@@ -173,6 +214,7 @@ def parse_socket_data():
     global camera_2_average_y
     global camera_2_people_count
 
+    # Break out the socket data we received.
     try:
         camera_1_average_x = float(camera_1_last_socket_data_received.split(',')[0])
         camera_1_average_y = float(camera_1_last_socket_data_received.split(',')[1])
@@ -187,55 +229,10 @@ def parse_socket_data():
     except:
         print("Parsing Data Error Camera 2 Server.")
 
+# This function can run with dummy tests on camera1.local and camera2.local.
+# demos receiving the correct information and parsing it.
 
-##########################################################################
-#########################################################################
-# Scenarios: These are True/False statements that take in the x, y average,
-# and the people count.  If the scenario fits, it simply returns true or
-# false.
-
-def scenario_1(x_avg, y_avg, count):
-    # Here's our test
-    if(x_avg < 250 and y_avg > 100):
-        return True
-    else:
-        return False
-
-while True:
-
-    # Always start the loop with a stop.
-    print("Stop.")
-    go_stop()
-    time.sleep(5)
-
-
-
-    '''
-    print("Stop.")
-    go_stop()
-    time.sleep(5)
-
-    print("Get Information from Switch Bank")
-    print(get_info())
-
-    print("Go Forward.")
-    go_forward()
-    go_stop()
-
-    print("Get Information from Switch Bank")
-    print(get_info())
-
-    print("Go Backward.")
-    go_backward()
-    go_stop()
-
-    print("Get Information from Switch Bank")
-    print(get_info())
-
-    print("Stop.")
-    go_stop()
-    '''
-
+def dummy_socket_test():
     get_socket_data(1)
     get_socket_data(2)
     parse_socket_data()
@@ -245,4 +242,99 @@ while True:
     debug_sockets("C2 AvgX: " + str(camera_2_average_x))
     debug_sockets("C2 AvgX: " + str(camera_2_average_y))
     debug_sockets("C2 Count: " + str(camera_2_people_count))
-    debug_sockets("==============================")
+
+##########################################################################
+#########################################################################
+# Scenarios: These are True/False statements that take in the x, y average,
+# and the people count.  If the scenario fits, it simply returns true or
+# false.
+
+# Example Scenario 1:  More than 11 people on camera 2.
+def scenario_1(x_avg1, y_avg1, count1, x_avg2, y_avg2, count2):
+    # Here's our test
+
+    test_case = count2 > 30
+
+    if test_case:
+        print("Found Test Case 1 Scenario TRUE!")
+        return True
+    else:
+        return False
+
+##########################################################################
+#########################################################################
+# Motors:  Test all the scenarios and the run the "run_motors" program.
+
+# The motor run is always the same.  Call this and run the motors.
+def run_motors():
+
+    debug_motors("Get Information from Switch Bank")
+    debug_motors(get_info())
+
+    debug_motors("Go Forward.")
+    go_forward()
+    go_stop()
+
+    debug_motors("Get Information from Switch Bank")
+    debug_motors(get_info())
+
+    # Sleep for a random amount of time.
+    sleepy_time = random.randint(random_min_sec, random_max_sec)
+    time.sleep(sleepy_time)
+
+    debug_motors("Go Backward.")
+    go_backward()
+    go_stop()
+
+    debug_motors("Get Information from Switch Bank")
+    debug_motors(get_info())
+
+    debug_motors("Stop.")
+    go_stop()
+
+def test_for_run_motors():
+    if scenario_1(camera_1_average_x, camera_1_average_y, camera_1_people_count, camera_2_average_x, camera_2_average_y, camera_2_people_count):
+        run_motors()
+
+while True:
+    print("Starting the loop!")
+    print("#################")
+    timeout_start()     #  Start with the timeout timer!  If the loop takes
+                        # Too long to complete, we'll start over.
+    # Everything is in a try loop to make sure that we are protected by timeouts!
+    try:
+
+        # Always start the loop with a stop.
+        print("Stop.")
+        go_stop()
+
+        get_socket_data(1)  # Poll for socket data and update camera_x_average_x/y
+        get_socket_data(2)  # Poll for socket data and update camera_x_average_x/y
+        parse_socket_data()
+
+        test_for_run_motors()
+
+    except:
+        print("==========Timed out!===========")
+        timeout_start()
+
+    print("==Ending the Loop!============")
+    print("==============================")
+
+
+def testing_junkyard():
+
+        # dummy_socket_test()   # Run the dummy sockets test to test network.
+
+    '''
+    print("Starting the loop!")
+    print("#################")
+    try:
+        print("Testing timeout on!")
+        time.sleep(20)
+
+    except:
+        print("==========Timed out!===========")
+        timeout_start()
+
+    '''

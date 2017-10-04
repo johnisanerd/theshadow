@@ -1,0 +1,20 @@
+
+# Copy to Correct Folder -> sudo cp shadow.service /etc/systemd/system/
+# Set Permissions -> sudo chmod 644 /etc/systemd/system/shadow.service
+# Configure systemd:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable shadow.service
+
+
+[Unit]
+Description=Camera Server Startup
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python /home/pi/motor-client.py
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
