@@ -12,25 +12,25 @@
 #define m4_a 40  // M4 Forward   // Brown
 #define m4_b 38  // M4 Backward  // Red
 
-#define m4_forw_limit  23
-#define m4_back_limit  27
-#define m4_forw_mag    25
-#define m4_back_mag    29
+#define m4_forw_limit  27 
+#define m4_back_limit  23 
+#define m4_forw_mag    29 
+#define m4_back_mag    25 
 
-#define m3_forw_limit  31
-#define m3_back_limit  35
-#define m3_forw_mag    33
-#define m3_back_mag    37
+#define m3_forw_limit  35 
+#define m3_back_limit  31 
+#define m3_forw_mag    37 
+#define m3_back_mag    33 
 
-#define m2_forw_limit  39
-#define m2_back_limit  43
-#define m2_forw_mag    41
-#define m2_back_mag    53
+#define m2_forw_limit  43 
+#define m2_back_limit  39 
+#define m2_forw_mag    53 
+#define m2_back_mag    41 
 
-#define m1_forw_limit  45
-#define m1_back_limit  49
-#define m1_forw_mag    47
-#define m1_back_mag    51
+#define m1_forw_limit  49 
+#define m1_back_limit  45 
+#define m1_forw_mag    51 
+#define m1_back_mag    47 
 
 int status_m4_forw_limit = 0;
 int status_m4_back_limit = 0;
@@ -389,18 +389,17 @@ void get_status(){
 void back_off_limit_switches(){
   // Check if any switches are pressed, then run the motor
   // 0.5 seconds in the opposit direction.
-  if(status_m1_forw_limit){motor_fwd(m1_a, m1_b); delay(100); motor_stop(m1_a, m1_b);};
-  if(status_m2_forw_limit){motor_fwd(m2_a, m2_b); delay(100); motor_stop(m2_a, m2_b);};
-  if(status_m3_forw_limit){motor_fwd(m3_a, m3_b); delay(100); motor_stop(m3_a, m3_b);};
-  if(status_m4_forw_limit){motor_fwd(m4_a, m4_b); delay(100); motor_stop(m4_a, m4_b);};
-  delay(2000);  // Not in a hurry here, keep it from overheating or getting stuck.
+  if(status_m1_back_limit){motor_fwd(m1_a, m1_b); delay(100); motor_stop(m1_a, m1_b);};
+  if(status_m2_back_limit){motor_fwd(m2_a, m2_b); delay(100); motor_stop(m2_a, m2_b);};
+  if(status_m3_back_limit){motor_fwd(m3_a, m3_b); delay(100); motor_stop(m3_a, m3_b);};
+  if(status_m4_back_limit){motor_fwd(m4_a, m4_b); delay(100); motor_stop(m4_a, m4_b);};
   
-  if(status_m1_back_limit){motor_bwd(m1_a, m1_b); delay(100); motor_stop(m1_a, m1_b);};
-  if(status_m2_back_limit){motor_bwd(m2_a, m2_b); delay(100); motor_stop(m2_a, m2_b);};
-  if(status_m3_back_limit){motor_bwd(m3_a, m3_b); delay(100); motor_stop(m3_a, m3_b);};
-  if(status_m4_back_limit){motor_bwd(m4_a, m4_b); delay(100); motor_stop(m4_a, m4_b);};
-  delay(2000);  // Not in a hurry here, keep it from overheating or getting stuck.
+  if(status_m1_forw_limit){motor_bwd(m1_a, m1_b); delay(100); motor_stop(m1_a, m1_b);};
+  if(status_m2_forw_limit){motor_bwd(m2_a, m2_b); delay(100); motor_stop(m2_a, m2_b);};
+  if(status_m3_forw_limit){motor_bwd(m3_a, m3_b); delay(100); motor_stop(m3_a, m3_b);};
+  if(status_m4_forw_limit){motor_bwd(m4_a, m4_b); delay(100); motor_stop(m4_a, m4_b);};
 
+  delay(1000);  // Not in a hurry here, keep it from overheating or getting stuck.
 }
 
 void serialListen() {
@@ -429,6 +428,13 @@ void loop()
     back_off_limit_switches();
     
   }
+  
+  /*
+  go_forward();
+  go_backward();
+  get_status();
+  */
+ 
   serialListen();
   if(last_command_in == 1){
 	  if(debug){Serial.println("Received Command: Stop.");};
