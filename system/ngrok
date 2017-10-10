@@ -10,3 +10,5 @@ the -region you specify matches the region in which you reserved your address.
 
 Bind a TCP tunnel on a reserved remote address
 ngrok tcp --region=us --remote-addr 1.tcp.ngrok.io:12345 22
+
+For VNC, bind to port 5901
