@@ -7,6 +7,7 @@ import time
 
 port_number = 10011
 server_1_name = 'camera1.local'
+# server_1_name = 'localhost'
 server_2_name = 'camera2.local'
 
 socket_timeout = 2                   # 2 Second timeout on socket listening.

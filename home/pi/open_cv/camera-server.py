@@ -30,6 +30,10 @@ debug_math_on = True
 show_output = True         # Turn this off and on to show the picture output.
 ##########################################
 
+average_x       = 0
+average_y       = 0
+people_count    = 0
+
 global store_found_filtered     # This should be the global number that stores the number of bodies found.
 
 # Debug function for video
@@ -231,14 +235,16 @@ def non_max_suppression_fast(boxes, overlapThresh):
 ##########################################
 # Create a TCP/IP socket
 socket.setdefaulttimeout(socket_timeout)    # Set the socket timeout for listening.
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket()
 
 # Allow us to reuse addresses.
 # https://stackoverflow.com/questions/4465959/python-errno-98-address-already-in-use
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Allow us to reuse addresses.
 
 # Bind the socket to the port
-server_address = ('localhost', port_number)
+# server_address = ('localhost', port_number)
+server_address = ('', port_number)
 debug_sockets("Starting up on %s port %s" % server_address)
 
 while True:
@@ -320,7 +326,7 @@ hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
 
 
 while(True):
-
+    # global people_count
     try:
         ##########################################
         ## WEBCAM OPTIONS
@@ -338,7 +344,6 @@ while(True):
         frame = rawCapture.array
         ##########################################
         '''
-
 
         found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(8,8), scale=1.05)
         found_filtered = non_max_suppression_fast(found, 0.3)
@@ -372,8 +377,8 @@ while(True):
     try:
         server_thread = threading.Thread(target=socket_server)
         if not server_thread.isAlive():
-            server_thread.start()
             debug_sockets("Server thread dead, starting.")
+            server_thread.start()
         else:
             debug_sockets("Server thread alive, not starting.")
         server_thread.join()
