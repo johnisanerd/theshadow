@@ -1,13 +1,19 @@
 
 '''
-1. This example detects heads in view.
-2. This example serves up the average x,y on a socket.
-Note: Webcam works best!
+Camera Server
 
-THIS EXAMPLE ONLY READS THE FRONT and the side of the head.
-Webcam works best!
+This file runs at startup on the camera Raspberry Pi.
+This file should be placed in /home/pi/camera-server.py
 
-	'''
+Deployment:
+You Should be able to FTP this onto each camera Pi.
+
+Vision Details:
+    1. This example detects heads in view.
+    2. This example serves up the average x,y and population on a socket.
+    Note: Webcam works best!
+
+'''
 
 import numpy as np
 import cv2
@@ -27,7 +33,7 @@ socket_timeout = 2                   # 2 Second timeout on socket listening.
 debug_video_on = True                # Turn this off and on to show the debug outputs.
 debug_socks_on = True                # Turn this off and on to show the debug outputs.
 debug_math_on = True
-show_output = True         # Turn this off and on to show the picture output.
+show_output = False         # Turn this off and on to show the picture output.
 ##########################################
 
 average_x       = 0
@@ -50,18 +56,21 @@ def debug_sockets(string_in):
 ##########################################
 ## VIDEO EXAMPLES OPTIONS
 ##########################################
-#cap = cv2.VideoCapture('Gallery-1.mp4')
-#cap = cv2.VideoCapture('Gallery-2.mp4')#
+#cap = cv2.VideoCapture('/home/pi/Gallery-1.mp4')
+#cap = cv2.VideoCapture('/home/pi/Gallery-2.mp4')#
 '''
-cap = cv2.VideoCapture('Gallery-3.mp4')
-'''#cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('/home/pi/Gallery-3.mp4') # Runs Gallery 3 Video
+
+# WARNING!  WARNING!
+# IF YOU ARE RUNNING THIS MAKE SURE THE VIDEO IS IN THE SAME DIRECTORY!
+'''
 ##########################################
 '''
 
 ##########################################
 ## WEBCAM OPTIONS
 ##########################################
-#cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)  # Runs the Web Cam Data
 ##########################################
 
 '''
