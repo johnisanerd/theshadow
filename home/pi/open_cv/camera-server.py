@@ -30,9 +30,9 @@ import atexit
 ##########################################
 port_number = 10011
 socket_timeout = 2                   # 2 Second timeout on socket listening.
-debug_video_on = True                # Turn this off and on to show the debug outputs.
-debug_socks_on = True                # Turn this off and on to show the debug outputs.
-debug_math_on = True
+debug_video_on = False                # Turn this off and on to show the debug outputs.
+debug_socks_on = False                # Turn this off and on to show the debug outputs.
+debug_math_on = False
 show_output = False         # Turn this off and on to show the picture output.
 ##########################################
 
@@ -58,19 +58,17 @@ def debug_sockets(string_in):
 ##########################################
 #cap = cv2.VideoCapture('/home/pi/Gallery-1.mp4')
 #cap = cv2.VideoCapture('/home/pi/Gallery-2.mp4')#
-'''
-cap = cv2.VideoCapture('/home/pi/Gallery-3.mp4') # Runs Gallery 3 Video
+#cap = cv2.VideoCapture('/home/pi/Gallery-3.mp4') # Runs Gallery 3 Video
 
 # WARNING!  WARNING!
 # IF YOU ARE RUNNING THIS MAKE SURE THE VIDEO IS IN THE SAME DIRECTORY!
-'''
 ##########################################
 '''
 
 ##########################################
 ## WEBCAM OPTIONS
 ##########################################
-#cap = cv2.VideoCapture(0)  # Runs the Web Cam Data
+cap = cv2.VideoCapture(0)  # Runs the Web Cam Data
 ##########################################
 
 '''

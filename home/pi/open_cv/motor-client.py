@@ -297,6 +297,9 @@ def test_for_run_motors():
         run_motors()
 
 while True:
+
+    # dummy_socket_test()   # Run the dummy sockets test to test network.
+
     print("Starting the loop!")
     print("#################")
     timeout_start()     #  Start with the timeout timer!  If the loop takes
@@ -320,7 +323,6 @@ while True:
 
     print("==Ending the Loop!============")
     print("==============================")
-
 
 def testing_junkyard():
 
