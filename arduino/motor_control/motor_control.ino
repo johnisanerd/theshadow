@@ -15,6 +15,9 @@ int m2_delay = 1000;  // Wait 2 seconds for M2 to start.  ETC
 int m3_delay = 4000;
 int m4_delay = 3000;
 
+int forward_state_machine[4] = {0,0,0,0};   // This should be reset each cycle.
+                                            // 0 means it hasn't been triggered yet.
+                                            // 1 means it has been triggered this cycle.
 
 #define m1_a 52  // M1 Forward   // Purple
 #define m1_b 50  // M1 Backward  // Grey wire
@@ -153,6 +156,31 @@ void check_switches(){
   status_m1_forw_mag   = digitalRead(m1_forw_mag);
   status_m1_back_mag   = digitalRead(m1_back_mag);
 
+  // Set State Machine
+  // We'll set the state machine whenever a switch is triggered, magnetic or physical.
+  // This is reset each time we send a run-forward command.  
+  if(forward_state_machine[0] == 0){                  // Only check if the state machine hasn't been triggered.
+                                                      // If it's already been triggered, don't reset it.
+    if(status_m1_back_limit || status_m1_back_mag){   // If either switch (Mag or Mech) has been triggered, 
+     forward_state_machine[0] = 1;                    // Set the state machine to triggered.
+    }
+  }
+  if(forward_state_machine[1] == 0){
+    if(status_m2_back_limit || status_m2_back_mag){
+      forward_state_machine[1] = 1;
+    }
+  }
+  if(forward_state_machine[2] == 0){
+    if(status_m3_back_limit || status_m3_back_mag){
+      forward_state_machine[2] = 1;
+    }
+  }
+  if(forward_state_machine[3] == 0){
+    if(status_m4_back_limit || status_m4_back_mag){
+      forward_state_machine[3] = 1;
+    }
+  }
+
 
   if(debug){
     Serial.println(" - - - ");
@@ -232,66 +260,73 @@ int sum_of_forward_limit_switches(){
   return sum;
 }
 
+void reset_forward_state_machine(){
+  // Reset the State machine
+  for(int i = 0; i < 4; i++){
+    forward_state_machine[i] = 0;
+  }
+}
+
 // Open the parachute
 void go_forward(){
+  reset_forward_state_machine();
+
   check_switches();
   // Start the timer
   unsigned long time_start = millis();
-  // if(sum_of_forward_limit_switches() == 0){
-  // if(sum_of_forward_switches() == 0){
 
-    // Run this loop while the time is less than all the delay times, and 100 ms.
-    unsigned long time_now = millis()-time_start;
-    while(
-          (time_now < m1_delay + 100) ||
-          (time_now < m2_delay + 100) ||
-          (time_now < m3_delay + 100) ||
-          (time_now < m4_delay + 100)
-      ){
+  // Run this loop while the time is less than all the delay times, and 100 ms.
+  unsigned long time_now = millis()-time_start;
+  while(
+        (time_now < m1_delay + 100) ||
+        (time_now < m2_delay + 100) ||
+        (time_now < m3_delay + 100) ||
+        (time_now < m4_delay + 100)
+    ){
 
-      time_now = millis()-time_start;
-      check_switches();
+    time_now = millis()-time_start;
+    check_switches();
 
-      if(time_now > m1_delay){
-        if(status_m1_back_mag || status_m1_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m1_a, m1_b);                         // Stop
-        } else {motor_bwd(m1_a, m1_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m1_forw_mag || status_m1_forw_limit) && (time_now > m1_delay+100)){
-          motor_stop(m1_a, m1_b);
-        }
-      } else {motor_stop(m1_a, m1_b);};                     // If we haven't reached the time, then stop!
+    if((time_now > m1_delay) && (forward_state_machine[0] == 0)){
+      if(status_m1_back_mag || status_m1_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
+        motor_stop(m1_a, m1_b);                         // Stop
+      } else {motor_bwd(m1_a, m1_b);}                   // Otherwise start.
+      // If mag or switch is reached and we have run 100ms forward then stop.
+      if((status_m1_forw_mag || status_m1_forw_limit) && (time_now > m1_delay+100)){
+        motor_stop(m1_a, m1_b);
+      }
+    } else {motor_stop(m1_a, m1_b);};                     // If we haven't reached the time, then stop!
 
-      if(time_now > m2_delay){
-        if(status_m2_back_mag || status_m2_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m2_a, m2_b);                         // Stop
-        } else {motor_bwd(m2_a, m2_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m2_forw_mag || status_m2_forw_limit) && (time_now > m2_delay+100)){
-          motor_stop(m2_a, m2_b);
-        }
-      } else {motor_stop(m2_a, m2_b);};                     // If we haven't reached the time, then stop!
+    if((time_now > m2_delay) && (forward_state_machine[1] == 0)){
+      if(status_m2_back_mag || status_m2_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
+        motor_stop(m2_a, m2_b);                         // Stop
+      } else {motor_bwd(m2_a, m2_b);}                   // Otherwise start.
+      // If mag or switch is reached and we have run 100ms forward then stop.
+      if((status_m2_forw_mag || status_m2_forw_limit) && (time_now > m2_delay+100)){
+        motor_stop(m2_a, m2_b);
+      }
+    } else {motor_stop(m2_a, m2_b);};                     // If we haven't reached the time, then stop!
 
-      if(time_now > m3_delay){
-        if(status_m3_back_mag || status_m3_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m3_a, m3_b);                         // Stop
-        } else {motor_bwd(m3_a, m3_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m3_forw_mag || status_m3_forw_limit) && (time_now > m3_delay+100)){
-          motor_stop(m3_a, m3_b);
-        }
-      } else {motor_stop(m3_a, m3_b);};                     // If we haven't reached the time, then stop!
+    if((time_now > m3_delay) && (forward_state_machine[2] == 0)){
+      if(status_m3_back_mag || status_m3_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
+        motor_stop(m3_a, m3_b);                         // Stop
+      } else {motor_bwd(m3_a, m3_b);}                   // Otherwise start.
+      // If mag or switch is reached and we have run 100ms forward then stop.
+      if((status_m3_forw_mag || status_m3_forw_limit) && (time_now > m3_delay+100)){
+        motor_stop(m3_a, m3_b);
+      }
+    } else {motor_stop(m3_a, m3_b);};                     // If we haven't reached the time, then stop!
 
-      if(time_now > m4_delay){
-        if(status_m4_back_mag || status_m4_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m4_a, m4_b);                         // Stop
-        } else {motor_bwd(m4_a, m4_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m4_forw_mag || status_m4_forw_limit) && (time_now > m4_delay+100)){
-          motor_stop(m4_a, m4_b);
-        }
-      } else {motor_stop(m4_a, m4_b);};                     // If we haven't reached the time, then stop!
-    }
+    if((time_now > m4_delay) && (forward_state_machine[3] == 0)){
+      if(status_m4_back_mag || status_m4_back_limit){   // Stop the motor if either the forward mag or limit switch is on.
+        motor_stop(m4_a, m4_b);                         // Stop
+      } else {motor_bwd(m4_a, m4_b);}                   // Otherwise start.
+      // If mag or switch is reached and we have run 100ms forward then stop.
+      if((status_m4_forw_mag || status_m4_forw_limit) && (time_now > m4_delay+100)){
+        motor_stop(m4_a, m4_b);
+      }
+    } else {motor_stop(m4_a, m4_b);};                     // If we haven't reached the time, then stop!
+  }
 
   unsigned long time_since_start = millis()-time_start;
   while(millis()-time_start < timeout_time){
@@ -466,10 +501,18 @@ void loop()
   }
 
   /* Test Code */
+  /*
   Serial.println("Go Forward.");
   go_forward();
   // delay_minutes(1); // Delay 1 minute seconds.
   delay(10000);
+
+  Serial.println("Get Status.");
+  Serial.println("State machine:");
+  for(int i = 0; i < 4; i++){
+    Serial.print(forward_state_machine[i], DEC);
+  }
+  get_status();
 
   Serial.println("Go Backward.");
   go_backward();
@@ -477,13 +520,17 @@ void loop()
   delay(10000);
 
   Serial.println("Get Status.");
+  Serial.println("State machine:");
+  for(int i = 0; i < 4; i++){
+    Serial.print(forward_state_machine[i], DEC);
+  }
   get_status();
   // delay_minutes(1); // Delay 1 minute seconds.
-
+  */
 
 
   /* Operations Code */
-  /*
+  
   serialListen();
   if(last_command_in == 1){
 	  if(debug){Serial.println("Received Command: Stop.");};
@@ -507,5 +554,5 @@ void loop()
   else{
 
   }
-  */
+  
 }
