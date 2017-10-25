@@ -310,87 +310,6 @@ void go_forward(){
     }
   }
   all_motors_stop();  // Shutdown all four motors.
-
-  /*
-  check_switches();
-  // Start the timer
-  unsigned long time_start = millis();
-  // if(sum_of_forward_limit_switches() == 0){
-  // if(sum_of_forward_switches() == 0){
-
-    // Run this loop while the time is less than all the delay times, and 100 ms.
-    unsigned long time_now = millis()-time_start;
-    while(
-          (time_now < m1_delay + 100) ||
-          (time_now < m2_delay + 100) ||
-          (time_now < m3_delay + 100) ||
-          (time_now < m4_delay + 100)
-      ){
-
-      time_now = millis()-time_start;
-      check_switches();
-
-      if(time_now > m1_delay){
-        if(status_m1_forw_mag || status_m1_forw_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m1_a, m1_b);                         // Stop
-        } else {motor_fwd(m1_a, m1_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m1_back_mag || status_m1_back_limit) && (time_now > m1_delay+100)){
-          motor_stop(m1_a, m1_b);
-        }
-      } else {motor_stop(m1_a, m1_b);};                     // If we haven't reached the time, then stop!
-
-      if(time_now > m2_delay){
-        if(status_m2_forw_mag || status_m2_forw_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m2_a, m2_b);                         // Stop
-        } else {motor_fwd(m2_a, m2_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m2_back_mag || status_m2_back_limit) && (time_now > m2_delay+100)){
-          motor_stop(m2_a, m2_b);
-        }
-      } else {motor_stop(m2_a, m2_b);};                     // If we haven't reached the time, then stop!
-
-      if(time_now > m3_delay){
-        if(status_m3_forw_mag || status_m3_forw_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m3_a, m3_b);                         // Stop
-        } else {motor_fwd(m3_a, m3_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m3_back_mag || status_m3_back_limit) && (time_now > m3_delay+100)){
-          motor_stop(m3_a, m3_b);
-        }
-      } else {motor_stop(m3_a, m3_b);};                     // If we haven't reached the time, then stop!
-
-      if(time_now > m4_delay){
-        if(status_m4_forw_mag || status_m4_forw_limit){   // Stop the motor if either the forward mag or limit switch is on.
-          motor_stop(m4_a, m4_b);                         // Stop
-        } else {motor_fwd(m4_a, m4_b);}                   // Otherwise start.
-        // If mag or switch is reached and we have run 100ms forward then stop.
-        if((status_m4_back_mag || status_m4_back_limit) && (time_now > m4_delay+100)){
-          motor_stop(m4_a, m4_b);
-        }
-      } else {motor_stop(m4_a, m4_b);};                     // If we haven't reached the time, then stop!
-
-
-    }
-
-  unsigned long time_since_start = millis()-time_start;
-  while(millis()-time_start < timeout_time){
-    // Do nothing until switches are hit . . .
-    if(status_m1_forw_mag || status_m1_forw_limit){
-      motor_stop(m1_a, m1_b);
-    }
-    if(status_m2_forw_mag || status_m2_forw_limit){
-      motor_stop(m2_a, m2_b);
-    }
-    if(status_m3_forw_mag || status_m3_forw_limit){
-      motor_stop(m3_a, m3_b);
-    }
-    if(status_m4_forw_mag || status_m4_forw_limit){
-      motor_stop(m4_a, m4_b);
-    }
-  }
-  all_motors_stop();  // Shutdown all four motors.
-  */
 }
 
 int sum_of_backward_switches(){
@@ -472,64 +391,6 @@ void go_backward(){
   }
   all_motors_stop();  // Shutdown all four motors.
 
-
-
-  /*
-  check_switches();
-  // Start the timer
-  unsigned long time_start = millis();
-
-  // Start running forward.  As long as no backward switch has been pressed.
-  unsigned long time_now = millis()-time_start;
-  while((sum_of_backward_limit_switches() == 0) && (time_now < 1000)){
-
-    time_now = millis()-time_start;
-    if(debug){Serial.println(time_now, DEC); };
-
-    if(!status_m1_back_mag && !status_m1_back_limit){
-      motor_bwd(m1_a, m1_b);
-    } else {motor_stop(m1_a, m1_b);}
-
-    if(!status_m2_back_mag && !status_m2_back_limit){
-      motor_bwd(m2_a, m2_b);
-    } else {motor_stop(m2_a, m2_b);}
-
-    if(!status_m3_back_mag && !status_m3_back_limit){
-      motor_bwd(m3_a, m3_b);
-    } else {motor_stop(m3_a, m3_b);}
-
-    if(!status_m4_back_mag && !status_m4_back_limit){
-      motor_bwd(m4_a, m4_b);
-    } else {motor_stop(m4_a, m4_b);}
-  }
-
-  // After the first switch (magnetic or mechanical) is thrown start to shut everyone down.
-  Serial.println(0, DEC); // !! DO NOT REMOVE!  FOR SOME REASON THE TIMING ON THIS WORKS.
-
-  while((sum_of_backward_switches() < 4)){
-    // Do nothing until switches are hit . . .
-    // Serial.println(time_now, DEC);
-    if(status_m1_back_mag || status_m1_back_limit){
-      motor_stop(m1_a, m1_b);
-    }
-    if(status_m2_back_mag || status_m2_back_limit){
-      motor_stop(m2_a, m2_b);
-    }
-    if(status_m3_back_mag || status_m3_back_limit){
-      motor_stop(m3_a, m3_b);
-    }
-    if(status_m4_back_mag || status_m4_back_limit){
-      motor_stop(m4_a, m4_b);
-    }
-
-    unsigned long time_since_start = millis()-time_start;
-    if(time_since_start > timeout_time){
-      all_motors_stop();  // Shutdown all four motors.
-      break;
-    }
-  }
-  all_motors_stop();  // Shutdown all four motors.
-  */
 }
 
 
@@ -614,12 +475,12 @@ void loop()
   go_backward();
   // delay_minutes(1); // Delay 1 minute seconds.
   delay(10000);
-  
+
   Serial.println("Get Status.");
   get_status();
   // delay_minutes(1); // Delay 1 minute seconds.
 
- 
+
 
   /* Operations Code */
   /*
