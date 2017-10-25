@@ -10,10 +10,10 @@ unsigned long timeout_time = 10000; // Timeout if we run past 15 seconds. // 600
 
 // Choreography Start Variables
 // These are the variables where we'll hold the data for choreography.
-int m1_delay = 3000;  // Wait 1 second for the M1 to start
-int m2_delay = 2000;  // Wait 2 seconds for M2 to start.  ETC
-int m3_delay = 1000;
-int m4_delay = 0000;
+int m1_delay = 000;  // Wait 1 second for the M1 to start
+int m2_delay = 1000;  // Wait 2 seconds for M2 to start.  ETC
+int m3_delay = 4000;
+int m4_delay = 3000;
 
 
 #define m1_a 52  // M1 Forward   // Purple
@@ -124,6 +124,14 @@ void setup()
 
 }
 
+void delay_minutes(int minutes){
+  for(int i = 0; i < minutes; i++){
+    for(int x = 0; x < 60; x++){
+      delay(1000); // Delays 1 second
+    }
+  }
+}
+
 void check_switches(){
   status_m4_forw_limit = digitalRead(m4_forw_limit);
   status_m4_back_limit = digitalRead(m4_back_limit);
@@ -224,6 +232,7 @@ int sum_of_forward_limit_switches(){
   return sum;
 }
 
+// Open the parachute
 void go_forward(){
   check_switches();
   // Start the timer
@@ -595,12 +604,25 @@ void loop()
 
   }
 
-  /*
+  /* Test Code */
+  Serial.println("Go Forward.");
   go_forward();
-  go_backward();
-  get_status();
-  */
+  // delay_minutes(1); // Delay 1 minute seconds.
+  delay(10000);
 
+  Serial.println("Go Backward.");
+  go_backward();
+  // delay_minutes(1); // Delay 1 minute seconds.
+  delay(10000);
+  
+  Serial.println("Get Status.");
+  get_status();
+  // delay_minutes(1); // Delay 1 minute seconds.
+
+ 
+
+  /* Operations Code */
+  /*
   serialListen();
   if(last_command_in == 1){
 	  if(debug){Serial.println("Received Command: Stop.");};
@@ -624,4 +646,5 @@ void loop()
   else{
 
   }
+  */
 }
