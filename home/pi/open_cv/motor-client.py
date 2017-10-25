@@ -31,9 +31,11 @@ camera_2_people_count = 0.0
 ##########################################################################
 #########################################################################
 # Randomness
+# Minimum and maximum time that the random number generator will use to
+# stay open or stay closed.
 
-random_min_sec = 5
-random_max_sec = 30
+random_min_sec = 1*60
+random_max_sec = 5*60
 
 ##########################################################################
 #########################################################################
@@ -222,12 +224,14 @@ def parse_socket_data():
     except:
         print("Parsing Data Error Camera 1 Server.")
 
+    '''
     try:
         camera_2_average_x = float(camera_2_last_socket_data_received.split(',')[0])
         camera_2_average_y = float(camera_2_last_socket_data_received.split(',')[1])
         camera_2_people_count = float(camera_2_last_socket_data_received.split(',')[2])
     except:
         print("Parsing Data Error Camera 2 Server.")
+    '''
 
 # This function can run with dummy tests on camera1.local and camera2.local.
 # demos receiving the correct information and parsing it.
@@ -249,14 +253,25 @@ def dummy_socket_test():
 # and the people count.  If the scenario fits, it simply returns true or
 # false.
 
-# Example Scenario 1:  More than 11 people on camera 2.
-def scenario_1(x_avg1, y_avg1, count1, x_avg2, y_avg2, count2):
+# X Positioning:
+# 20    - Door
+# 115   - Halfway between door and people
+# 270   - people
+# 412   - Halfway between pole and parachute
+# 500   - parachute
+
+# Scenario 1:  Less than 3 people on camera 2.
+def room_test(x_avg1, y_avg1, count1):
     # Here's our test
+    print("Run Tests on Data.")
+    # Test 1:   Are there less than three people in the room?
+    #           Is the average position less than 115?
 
-    test_case = count2 > 30
-
-    if test_case:
-        print("Found Test Case 1 Scenario TRUE!")
+    if((count1 < 3) and (x_avg1 < 115)):
+        print("Found Test Case 1 Scenario TRUE!  Average is near the door.")
+        return True
+    elif((count1 >3) and (x_avg1 < 270 )):
+        print("More than 3 people in the room.  Average is behind the post.")
         return True
     else:
         return False
@@ -293,7 +308,10 @@ def run_motors():
     go_stop()
 
 def test_for_run_motors():
-    if scenario_1(camera_1_average_x, camera_1_average_y, camera_1_people_count, camera_2_average_x, camera_2_average_y, camera_2_people_count):
+    print("AvgX: " + str(camera_1_average_x))
+    print("AvgY: " + str(camera_1_average_y))
+    print("People: " +str(camera_1_people_count))
+    if room_test(camera_1_average_x, camera_1_average_y, camera_1_people_count):
         run_motors()
 
 while True:
@@ -312,13 +330,14 @@ while True:
         go_stop()
 
         get_socket_data(1)  # Poll for socket data and update camera_x_average_x/y
-        get_socket_data(2)  # Poll for socket data and update camera_x_average_x/y
+        # get_socket_data(2)  # Poll for socket data and update camera_x_average_x/y
         parse_socket_data()
 
         test_for_run_motors()
 
-    except:
-        print("==========Timed out!===========")
+    except Exception as e:
+        print(e)
+        print("==========Errored out!===========")
         timeout_start()
 
     print("==Ending the Loop!============")

@@ -18,7 +18,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python /home/pi/camera-server.py
+ExecStart=/usr/bin/python /home/pi/open_cv/camera-server-motion.py
 Restart=always
 RestartSec=60
 
