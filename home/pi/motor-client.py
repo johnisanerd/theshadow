@@ -1,4 +1,5 @@
 # Send motor data to the Arduino over Serial.
+######
 
 import time
 import serial
@@ -34,8 +35,19 @@ camera_2_people_count = 0.0
 # Minimum and maximum time that the random number generator will use to
 # stay open or stay closed.
 
-random_min_sec = 1*60
-random_max_sec = 5*60
+'''
+random_open_min_sec = 1*60   # Open for 1 minute minimum
+random_open_max_sec = 5*60   # Open for 5 minutes maximum
+
+random_close_min_sec = 1*60   # Open for 1 minute minimum
+random_close_max_sec = 5*60   # Open for 5 minutes maximum
+'''
+
+random_open_min_sec = 10   # Open for 1 minute minimum
+random_open_max_sec = 10   # Open for 5 minutes maximum
+
+random_close_min_sec = 5   # Open for 1 minute minimum
+random_close_max_sec = 5   # Open for 5 minutes maximum
 
 ##########################################################################
 #########################################################################
@@ -128,7 +140,7 @@ def go_forward():
         time.sleep(1)
         data_in = readSerial()
         time.sleep(0.5)
-        print("Tried Go_Forward and haven't gotten a response.")
+        debug_motors("Tried Go_Forward and haven't gotten a response.")
     info = data_in
     return info
 
@@ -140,7 +152,7 @@ def go_backward():
         time.sleep(1)
         data_in = readSerial()
         time.sleep(0.5)
-        print("Tried Go_Backward and haven't gotten a response.")
+        debug_motors("Tried Go_Backward and haven't gotten a response.")
     info = data_in
     return info
 
@@ -253,35 +265,14 @@ def dummy_socket_test():
 # and the people count.  If the scenario fits, it simply returns true or
 # false.
 
-# X Positioning:
-# 20    - Door
-# 115   - Halfway between door and people
-# 270   - people
-# 412   - Halfway between pole and parachute
-# 500   - parachute
 
-# Scenario 1:  Less than 3 people on camera 2.
-def room_test(x_avg1, y_avg1, count1):
-    # Here's our test
-    print("Run Tests on Data.")
-    # Test 1:   Are there less than three people in the room?
-    #           Is the average position less than 115?
-
-    if((count1 < 3) and (x_avg1 < 115)):
-        print("Found Test Case 1 Scenario TRUE!  Average is near the door.")
-        return True
-    elif((count1 >3) and (x_avg1 < 270 )):
-        print("More than 3 people in the room.  Average is behind the post.")
-        return True
-    else:
-        return False
 
 ##########################################################################
 #########################################################################
 # Motors:  Test all the scenarios and the run the "run_motors" program.
 
 # The motor run is always the same.  Call this and run the motors.
-def run_motors():
+def motors_open():
 
     debug_motors("Get Information from Switch Bank")
     debug_motors(get_info())
@@ -294,9 +285,13 @@ def run_motors():
     debug_motors(get_info())
 
     # Sleep for a random amount of time.
-    sleepy_time = random.randint(random_min_sec, random_max_sec)
+    sleepy_time = random.randint(random_open_min_sec, random_open_max_sec)
+    debug_motors("Randomly Sleep for " + str(sleepy_time) + " seconds. ")
+    debug_motors("Randomly Sleep for " + str(sleepy_time/60.0) + " minutes. ")
+
     time.sleep(sleepy_time)
 
+def motors_close():
     debug_motors("Go Backward.")
     go_backward()
     go_stop()
@@ -304,15 +299,50 @@ def run_motors():
     debug_motors("Get Information from Switch Bank")
     debug_motors(get_info())
 
+    # Sleep for a random amount of time.
+    sleepy_time = random.randint(random_close_min_sec, random_close_max_sec)
+    debug_motors("Randomly Sleep for " + str(sleepy_time) + " seconds. ")
+    debug_motors("Randomly Sleep for " + str(sleepy_time/60.0) + " minutes. ")
+    time.sleep(sleepy_time)
     debug_motors("Stop.")
     go_stop()
 
 def test_for_run_motors():
-    print("AvgX: " + str(camera_1_average_x))
-    print("AvgY: " + str(camera_1_average_y))
-    print("People: " +str(camera_1_people_count))
-    if room_test(camera_1_average_x, camera_1_average_y, camera_1_people_count):
-        run_motors()
+    # X Positioning:
+    # 20    - Door
+    # 115   - Halfway between door and people
+    # 270   - people
+    # 412   - Halfway between pole and parachute
+    # 500   - parachute
+    print("Avg  X: " + str(camera_1_average_x))
+    print("Avg  Y: " + str(camera_1_average_y))
+    print("People: " + str(camera_1_people_count))
+    # Here's our test
+    print("Run Tests on Data.")
+    # Test 1:   Are there less than three people in the room?
+    #           Is the average position less than 115?
+
+    if((camera_1_people_count < 3) and (camera_1_average_x < 115)):
+        print("Found Test Case 1 Scenario TRUE!  Average is near the door.")
+        motors_open()
+    # Test 2:   Are there more than three people in the room?
+    #           Is the average position less than 270?
+    elif((camera_1_people_count > 3) and (camera_1_average_x < 270 )):
+        print("More than 3 people in the room.  Average is behind the post.")
+        motors_open()
+    # Test 3:   Are there less three people in the room?
+    #           Is the average position greater than 270?
+    elif((camera_1_people_count < 3) and (camera_1_average_x >= 300 )):
+        print("Less than 3 people in the room.  Average is in front of the post.")
+        motors_close()
+    # Test 4:   Are there more than three people in the room?
+    #           Is the average position greater than 270?
+    elif((camera_1_people_count > 3) and (camera_1_average_x >= 270 )):
+        print("Less than 3 people in the room.  Average is in front of the post.")
+        motors_close()
+    else:
+        print("No Scenario matched.  Nothing to change!")
+        motors_close()
 
 while True:
 
