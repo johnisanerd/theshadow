@@ -501,10 +501,11 @@ void loop()
   }
 
   /* Test Code */
+
   /*
   Serial.println("Go Forward.");
   go_forward();
-  // delay_minutes(1); // Delay 1 minute seconds.
+  //delay_minutes(1); // Delay 1 minute seconds.
   delay(10000);
 
   Serial.println("Get Status.");
@@ -516,7 +517,7 @@ void loop()
 
   Serial.println("Go Backward.");
   go_backward();
-  // delay_minutes(1); // Delay 1 minute seconds.
+  //delay_minutes(1); // Delay 1 minute seconds.
   delay(10000);
 
   Serial.println("Get Status.");
