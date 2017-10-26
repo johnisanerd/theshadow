@@ -35,20 +35,19 @@ camera_2_people_count = 0.0
 # Minimum and maximum time that the random number generator will use to
 # stay open or stay closed.
 
-'''
 random_open_min_sec = 1*60   # Open for 1 minute minimum
 random_open_max_sec = 5*60   # Open for 5 minutes maximum
 
 random_close_min_sec = 1*60   # Open for 1 minute minimum
 random_close_max_sec = 5*60   # Open for 5 minutes maximum
-'''
 
+'''
 random_open_min_sec = 10   # Open for 1 minute minimum
 random_open_max_sec = 10   # Open for 5 minutes maximum
 
 random_close_min_sec = 5   # Open for 1 minute minimum
 random_close_max_sec = 5   # Open for 5 minutes maximum
-
+'''
 ##########################################################################
 #########################################################################
 
@@ -307,6 +306,8 @@ def motors_close():
     debug_motors("Stop.")
     go_stop()
 
+# This will run and test the camera data for the scenarios we want to run.
+# If we find a scenario that matches, we run it.
 def test_for_run_motors():
     # X Positioning:
     # 20    - Door
@@ -314,15 +315,15 @@ def test_for_run_motors():
     # 270   - people
     # 412   - Halfway between pole and parachute
     # 500   - parachute
-    print("Avg  X: " + str(camera_1_average_x))
-    print("Avg  Y: " + str(camera_1_average_y))
-    print("People: " + str(camera_1_people_count))
+    debug_motors("Avg  X: " + str(camera_1_average_x))
+    debug_motors("Avg  Y: " + str(camera_1_average_y))
+    debug_motors("People: " + str(camera_1_people_count))
     # Here's our test
-    print("Run Tests on Data.")
+    debug_motors("Run Tests on Data.")
     # Test 1:   Are there less than three people in the room?
     #           Is the average position less than 115?
 
-    if((camera_1_people_count < 3) and (camera_1_average_x < 115)):
+    if((camera_1_people_count < 3) and (camera_1_average_x < 300)):
         print("Found Test Case 1 Scenario TRUE!  Average is near the door.")
         motors_open()
     # Test 2:   Are there more than three people in the room?

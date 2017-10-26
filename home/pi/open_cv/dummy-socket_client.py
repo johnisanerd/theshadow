@@ -1,5 +1,6 @@
 # This is for testing scenarios where you need a socket client.
 # For example, run this to develop the socket_server_camera.py program.
+# Only gathers data for Camera1.local!
 
 import socket
 import sys
@@ -91,23 +92,26 @@ def parse_socket_data():
         camera_1_people_count = float(camera_1_last_socket_data_received.split(',')[2])
     except:
         print("Parsing Data Error Camera 1 Server.")
-
+    '''
     try:
         camera_2_average_x = float(camera_2_last_socket_data_received.split(',')[0])
         camera_2_average_y = float(camera_2_last_socket_data_received.split(',')[1])
         camera_2_people_count = float(camera_2_last_socket_data_received.split(',')[2])
     except:
         print("Parsing Data Error Camera 2 Server.")
+    '''
 
 while True:
     time.sleep(5)
     get_socket_data(1)
-    get_socket_data(2)
+    # get_socket_data(2)
     parse_socket_data()
     debug_sockets("C1 AvgX: " + str(camera_1_average_x))
-    debug_sockets("C1 AvgX: " + str(camera_1_average_y))
+    debug_sockets("C1 AvgY: " + str(camera_1_average_y))
     debug_sockets("C1 Count: " + str(camera_1_people_count))
+    '''
     debug_sockets("C2 AvgX: " + str(camera_2_average_x))
     debug_sockets("C2 AvgX: " + str(camera_2_average_y))
     debug_sockets("C2 Count: " + str(camera_2_people_count))
+    '''
     debug_sockets("==============================")
