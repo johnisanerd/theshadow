@@ -1,0 +1,26 @@
+
+# Copy to Correct Folder -> sudo cp camera.service /etc/systemd/system/
+# Set Permissions -> sudo chmod 644 /etc/systemd/system/camera.service
+# Configure systemd:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable camera.service
+
+# Check status:  systemctl status camera.service
+# Remove service: sudo systemctl disable camera1/2.service
+# Restart service: sudo systemctl restart camera.service
+# Stop service: sudo systemctl stop camera.service
+# See ongoing issues:  sudo journalctl -u camera.service
+# SystemD Notes:  https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+
+[Unit]
+Description=Camera Server Startup
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python /home/pi/open_cv/camera-server-motion.py
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
