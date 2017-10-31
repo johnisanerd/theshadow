@@ -35,11 +35,11 @@ camera_2_people_count = 0.0
 # Minimum and maximum time that the random number generator will use to
 # stay open or stay closed.
 
-random_open_min_sec = 1*60   # Open for 1 minute minimum
-random_open_max_sec = 5*60   # Open for 5 minutes maximum
+random_open_min_sec = 30 # 1*60   # Open for 1 minute minimum
+random_open_max_sec = 60 # 5*60   # Open for 5 minutes maximum
 
-random_close_min_sec = 1*60   # Open for 1 minute minimum
-random_close_max_sec = 5*60   # Open for 5 minutes maximum
+random_close_min_sec = 30 # 1*60   # Open for 1 minute minimum
+random_close_max_sec = 60 # 5*60   # Open for 5 minutes maximum
 
 '''
 random_open_min_sec = 10   # Open for 1 minute minimum

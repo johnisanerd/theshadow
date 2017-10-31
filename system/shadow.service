@@ -4,7 +4,9 @@
 # Configure systemd:
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable shadow.service
-
+# Restart service: sudo systemctl restart shadow.service
+# Stop service: sudo systemctl stop shadow.service
+# See ongoing issues:  sudo journalctl -u shadow.service
 
 [Unit]
 Description=Camera Server Startup
